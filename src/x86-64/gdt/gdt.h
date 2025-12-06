@@ -53,7 +53,8 @@ typedef struct {
     uint64_t base;    // Adresse der GDT
 } __attribute__((packed)) gdt_ptr_t;
 
-__attribute__((cdecl)) void load_gdtr(void* gdtr);
+extern void load_gdtr(void* gdtr);
+extern void gdt_reload_segments();
 
 void gdt_set_entry(gdt_entry_t *entry, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 

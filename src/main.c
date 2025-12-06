@@ -1,6 +1,7 @@
 #include "./limine/limine.h"
 #include "./x86-64/stdio/stdio.h"
 #include "./x86-64/gdt/gdt.h"
+#include "./x86-64/idt/idt.h"
 
 
 void kernel_main()
@@ -17,15 +18,20 @@ void kernel_main()
     uint64_t height = fb->height;
 
 
-
     printf("this is the start of the kernel\n");
+    printf("test adr : %x\n", sizeof(InterruptDescriptor64));
 
 
     printf("height %x\n", height);
 
     init_gdt();
 
-  
+    init_idt();
+
+    volatile int x = 0;
+    int y = 10 / x;   
+
+    printf("hello fault %x", y);
     for (;;)
     {
     }

@@ -7,7 +7,7 @@ AS        = nasm
 OBJCOPY64 = x86_64-elf-objcopy
 
 # added -mcmodel=large to fix 64-bit relocation issues
-CFLAGS64  = -ffreestanding -fno-pie -fno-stack-protector -m64 -mcmodel=large -O2 -Wall -Wextra -mno-red-zone
+CFLAGS64  = -g -O0 -ffreestanding -fno-pie -fno-stack-protector -m64 -mcmodel=large -O2 -Wall -Wextra -mno-red-zone
 ASFLAGS64 = -f elf64
 
 # Limine Pfad automatisch via Homebrew finden
@@ -90,6 +90,8 @@ $(ISO_FILE): $(KERNEL_ELF)
 
 run: iso
 	qemu-system-x86_64 -cdrom $(ISO_FILE)
+debug: iso
+	qemu-system-x86_64 -s -S -cdrom $(ISO_FILE)
 
 # ======================================
 #  Aufräumen
