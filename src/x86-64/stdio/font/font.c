@@ -114,7 +114,7 @@ void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_
 {
   if (c < ' ' || c > (' ' + 95))
   {
-    // TODO implement  error invalid char or something
+    //TODO: implement  error invalid char or something
     return;
   }
   char *row = letters[c - ' '];

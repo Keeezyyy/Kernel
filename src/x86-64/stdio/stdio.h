@@ -11,7 +11,6 @@
 
 extern limine_framebuffer *fb_stdio;   
 
-
 void initSDTIO(void *fb);
 
 void putc(char c);

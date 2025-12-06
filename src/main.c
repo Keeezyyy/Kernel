@@ -1,9 +1,6 @@
 #include "./limine/limine.h"
 #include "./x86-64/stdio/stdio.h"
-#define LIMINE_COMMON_MAGIC 0xc7b1dd30df4c8b88, 0x0a82e883a194f07b
-
-#define LIMINE_MEMMAP_REQUEST_ID {LIMINE_COMMON_MAGIC, 0x67cf3d9d378a806f, 0xe304acdfc50c3c62}
-
+#include "./x86-64/gdt/gdt.h"
 
 
 void kernel_main()
@@ -21,9 +18,14 @@ void kernel_main()
 
 
 
-    printf("hello world");
+    printf("this is the start of the kernel\n");
 
 
+    printf("height %x\n", height);
+
+    init_gdt();
+
+  
     for (;;)
     {
     }
