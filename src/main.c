@@ -28,10 +28,10 @@ void kernel_main()
 
     init_idt();
 
-    volatile int x = 0;
-    int y = 10 / x;   
+    volatile uint64_t *ptr = (uint64_t *)0xFFFFFFFFFFFF0000;
+    uint64_t x = *ptr;  
 
-    printf("hello fault %x", y);
+
     for (;;)
     {
     }

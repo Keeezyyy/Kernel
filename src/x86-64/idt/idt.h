@@ -1,8 +1,15 @@
 #pragma once
 #include <stdint.h>
 #include "../stdio/stdio.h"
+#include "./isr_routines.h"
 
 #define KERNEL_CODE_SELECTOR 0x08
+
+#define INTERRUPT_GATE_TYPE 0xE
+#define TRAP_GATE_TYPE 0xF
+
+#define PRIVILEGE_RING_3_USER 3
+#define PRIVILEGE_RING_0_KERNEL 0
 
 typedef struct
 {
@@ -31,7 +38,7 @@ void idt_set_entry_ex(InterruptDescriptor64 *entry,
 
 void __attribute__((nooptimize))  init_idt();
 
-void interrupt_handler();
+void interrupt_handler(uint64_t isr_num);
 
 void fill_idts();
 
