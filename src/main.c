@@ -12,6 +12,7 @@ void kernel_main()
 
     limine_framebuffer *fb = getFB();
 
+    initSDTIO(fb);
     uint8_t *fb_addr = (uint8_t *)fb->address;
     uint64_t pitch = fb->pitch;
     uint64_t bpp = fb->bpp; 
@@ -20,13 +21,8 @@ void kernel_main()
 
 
 
+    printf("hello world");
 
-
-    char c = '1';
-    for(int i = 0;i<25; i++){
-        putc(c, fb);
-        c++;
-    }
 
     for (;;)
     {

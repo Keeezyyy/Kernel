@@ -6,7 +6,8 @@ LD64      = x86_64-elf-ld
 AS        = nasm
 OBJCOPY64 = x86_64-elf-objcopy
 
-CFLAGS64  = -ffreestanding -fno-pie -fno-stack-protector -m64 -O2 -Wall -Wextra -mno-red-zone
+# added -mcmodel=large to fix 64-bit relocation issues
+CFLAGS64  = -ffreestanding -fno-pie -fno-stack-protector -m64 -mcmodel=large -O2 -Wall -Wextra -mno-red-zone
 ASFLAGS64 = -f elf64
 
 # Limine Pfad automatisch via Homebrew finden
@@ -15,15 +16,15 @@ LIMINE_DIR := $(shell brew --prefix limine)/share/limine
 # ======================================
 #  Verzeichnisse
 # ======================================
-SRC_KERNEL = src
-BUILD      = build
-ISO_DIR    = iso
-KERNEL_DIR = $(BUILD)/kernel
+SRC_KERNEL    = src
+BUILD        = build
+ISO_DIR      = iso
+KERNEL_DIR   = $(BUILD)/kernel
 LINKER_SCRIPT = $(SRC_KERNEL)/linker.ld
 
 KERNEL_ELF = iso_root/boot/kernel.elf
 KERNEL_BIN = $(KERNEL_DIR)/kernel.bin
-ISO_FILE   = iso/image.iso
+ISO_FILE   = $(ISO_DIR)/image.iso
 
 # ======================================
 #  Dateisuche (mit find)
@@ -58,7 +59,8 @@ $(KERNEL_DIR)/%.o: $(SRC_KERNEL)/%.asm
 #  Linken
 # ======================================
 $(KERNEL_ELF): $(KERNEL_OBJ) $(LINKER_SCRIPT)
-	mkdir -p $(KERNEL_DIR)
+	mkdir -p $(dir $(KERNEL_ELF))
+	mkdir -p $(ISO_DIR)
 	$(LD64) -T $(LINKER_SCRIPT) -o $(KERNEL_ELF) $(KERNEL_OBJ)
 
 	xorriso -as mkisofs -R -r -J \
@@ -66,21 +68,21 @@ $(KERNEL_ELF): $(KERNEL_OBJ) $(LINKER_SCRIPT)
 		-no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
 		-apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		iso_root -o iso/image.iso
-
+		iso_root -o $(ISO_FILE)
 
 # ======================================
 #  ISO mit Limine erzeugen (macOS-kompatibel)
 # ======================================
 iso: $(ISO_FILE)
+
 $(ISO_FILE): $(KERNEL_ELF)
-	# ISO erzeugen
+	mkdir -p $(ISO_DIR)
 	xorriso -as mkisofs -R -r -J \
 		-b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
 		-apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		iso_root -o iso/image.iso
+		iso_root -o $(ISO_FILE)
 
 # ======================================
 #  QEMU
