@@ -13,7 +13,7 @@ global isr_routine_%1
 isr_routine_%1:
     cld
     ; Wenn du die Interrupt-Nummer brauchst:
-    mov     rdi, %1          ; oder %1-1, je nach deinem Schema
+    mov     rdi, %1 -1          
     call    interrupt_handler
     iretq
 %endmacro

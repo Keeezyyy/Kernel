@@ -13,4 +13,4 @@
 
 
 
-void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y,limine_framebuffer *fb);
+void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y,struct limine_framebuffer *fb);

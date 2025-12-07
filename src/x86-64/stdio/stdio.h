@@ -9,7 +9,7 @@
 #define VERTICAL_LETTER_SPACING 2
 #define HORIZONTAL_LETTER_SPACING 5
 
-extern limine_framebuffer *fb_stdio;   
+extern struct limine_framebuffer *fb_stdio;   
 
 void initSDTIO(void *fb);
 

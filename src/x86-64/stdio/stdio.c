@@ -2,11 +2,12 @@
 
 unsigned int posX = 5;
 unsigned int posY = 5;
-limine_framebuffer *fb_stdio;
+struct limine_framebuffer *fb_stdio;
 
-void initSDTIO(void *framebuffer){
-    
-    fb_stdio = (limine_framebuffer*)framebuffer;
+void initSDTIO(void *framebuffer)
+{
+
+    fb_stdio = (struct limine_framebuffer *)framebuffer;
 }
 void incPos()
 {
@@ -30,11 +31,10 @@ void putc(char c)
     incPos();
 }
 
-
 void printHexDump(void *adr, uint16_t lines)
 {
 
-    uint8_t* byteAdr = adr;
+    uint8_t *byteAdr = adr;
     for (int i = 0; i < lines; i++)
     {
         printf("0x%x\0", (uint32_t)byteAdr);
@@ -44,7 +44,7 @@ void printHexDump(void *adr, uint16_t lines)
             printf(" ");
             putByte(*(byteAdr));
             printf(" ");
-            //printf("  %b  ", *(uint8_t*)(adr));
+            // printf("  %b  ", *(uint8_t*)(adr));
             byteAdr++;
         }
 
@@ -77,48 +77,54 @@ void putS(const char *str)
     }
 }
 
+//TODO: fix calling conventions error 
 void printf(const char *str, ...)
 {
     va_list ap;
     va_start(ap, str);
 
-    while (*str != '\0')
+    while (*str)
     {
-
         if (*str == '%')
         {
             str++;
-
             switch (*str)
             {
-            case 'x':
-            {
-
+            case 'x': {
                 uint32_t val = va_arg(ap, uint32_t);
                 for (int i = 3; i >= 0; i--)
-                {
                     putByte((val >> (i * 8)) & 0xFF);
-                }
+                break;
             }
-            break;
-            case 's':
-            {
+
+            case 'p': {
+                uint64_t val = va_arg(ap, uint64_t);
+                for (int i = 7; i >= 0; i--)
+                    putByte((val >> (i * 8)) & 0xFF);
+                break;
+            }
+
+            case 's': {
                 char *s = va_arg(ap, char *);
                 putS(s);
+                break;
             }
-            case 'c':
-            {
-                char c = va_arg(ap, char);
-                putc(c);
+
+            case 'c': {
+                int ci = va_arg(ap, int);   
+                putc((char)ci);
+                break;
             }
-            case 'b':
-            {
-                uint8_t c = va_arg(ap, char);
-                putByte(c);
+
+            case 'b': {
+                int bi = va_arg(ap, int);   
+                putByte((uint8_t)bi);
+                break;
             }
-            break;
 
             default:
+                putc('%');
+                putc(*str);
                 break;
             }
         }
@@ -128,4 +134,6 @@ void printf(const char *str, ...)
         }
         str++;
     }
+
+    va_end(ap);
 }

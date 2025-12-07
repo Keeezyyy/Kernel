@@ -99,7 +99,7 @@ unsigned char letters[95][13] = {
 
 bool isPixel(char row, int x) { return (row >> x) & 1; }
 
-void putpixel(limine_framebuffer *fb, int x, int y,
+void putpixel(struct limine_framebuffer *fb, int x, int y,
               uint8_t r, uint8_t g, uint8_t b)
 {
 
@@ -110,7 +110,7 @@ void putpixel(limine_framebuffer *fb, int x, int y,
   *pixel = (r << fb->red_mask_shift) | (g << fb->green_mask_shift) | (b << fb->blue_mask_shift);
 }
 
-void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y, limine_framebuffer *fb)
+void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y,struct limine_framebuffer *fb)
 {
   if (c < ' ' || c > (' ' + 95))
   {
