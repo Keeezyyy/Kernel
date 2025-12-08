@@ -4,6 +4,8 @@ static struct limine_framebuffer *fb;
 
 struct limine_hhdm_response *hhdm;
 
+struct limine_memmap_response *memmap;
+
 __attribute__((used, section(".limine_requests_start"))) static const uint64_t limine_requests_start_marker[4] = {0xf6b8f4b39de7d1ae, 0xfab91a6940fcb9cf, 0x785c6ed015d3e316, 0x181e920a7852b9d9};
 
 __attribute__((used, section(".limine_requests"))) volatile struct limine_base_revision base_revision_request = {
@@ -19,6 +21,11 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
   .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
   .revision = 0,
 };
+__attribute__((used, section(".limine_requests"))) static volatile struct limine_memmap_request memmmap_request = {
+  .id = LIMINE_MEMMAP_REQUEST_ID,
+  .revision = 0,
+};
+
 
 
 __attribute__((used, section(".limine_requests_end"))) static const uint64_t limine_requests_end_marker[2] = {0xadc0e0531bb10d03, 0x9572709f31764c62};
@@ -39,15 +46,16 @@ void request()
 
   hhdm = tmp_hhdm;
 
-  volatile uint64_t val = hhdm->offset;
-
-
-  if (val == NULL) {
+  if (hhdm->offset == NULL) {
     //somthing wrong with hhdm
     for(;;){}
   }
 
 
+  struct limine_memmap_response *tmp_memmap = (struct limine_memmap_response*)memmmap_request.response;
+
+
+  memmap = tmp_memmap;
 }
 
 struct limine_framebuffer *getFB()
@@ -58,4 +66,8 @@ struct limine_framebuffer *getFB()
 struct limine_hhdm_response *getHHDM()
 {
   return hhdm;
+}
+struct limine_memmap_response *getMEMMAP()
+{
+  return memmap;
 }

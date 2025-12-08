@@ -2,6 +2,7 @@
 #include "./x86-64/stdio/stdio.h"
 #include "./x86-64/gdt/gdt.h"
 #include "./x86-64/idt/idt.h"
+#include "./x86-64/memory/memory.h"
 
 
 void kernel_main()
@@ -24,13 +25,7 @@ void kernel_main()
 
   init_idt();
 
-  struct limine_hhdm_response *hhdm= getHHDM();
-
-  volatile uint64_t offset = hhdm->offset;
-
-
-
-  printf("val : %p\n", offset);
+  init_pml4(getMEMMAP(), getHHDM());
 
   for (;;)
   {

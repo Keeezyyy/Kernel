@@ -27,3 +27,5 @@ void request();
 
 struct limine_hhdm_response *getHHDM();
 struct limine_framebuffer *getFB();
+struct limine_memmap_response *getMEMMAP();
+
