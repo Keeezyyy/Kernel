@@ -25,7 +25,7 @@ void kernel_main()
 
   init_idt();
 
-  init_pml4(getMEMMAP(), getHHDM());
+  init_pml4(getMEMMAP(), getHHDM(), getEXEC_ADDRESS(), getEXEC_FILE());
 
   for (;;)
   {

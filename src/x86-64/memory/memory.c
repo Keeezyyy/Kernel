@@ -12,7 +12,7 @@ static uint8_t area_count = 0;
 static uint64_t total_usable_pages = 0;
 static struct mem_area mmap_areas[128];
 
-void init_pml4(struct limine_memmap_response * memmap_res, struct limine_hhdm_response * hhdm_res){
+void init_pml4(struct limine_memmap_response * memmap_res, struct limine_hhdm_response * hhdm_res, struct limine_executable_address_response* exec_res, struct limine_executable_file_response *exec_file){
   for(int i = 0; i<512; i++){
     PML4[i] = 0;
     PDPT[i] = 0;
@@ -22,6 +22,14 @@ void init_pml4(struct limine_memmap_response * memmap_res, struct limine_hhdm_re
 
 
   read_memmap_into_buffer(memmap_res, hhdm_res);
+
+  fill_initial_pages(exec_file->executable_file);
+}
+
+void fill_initial_pages(struct limine_file* file){
+  printf("size : 0x%p\n", file->size);
+  putS(file->path);
+  return;
 }
 
 void read_memmap_into_buffer(struct limine_memmap_response * memmap_res, struct limine_hhdm_response * hhdm_res){
@@ -45,9 +53,6 @@ void read_memmap_into_buffer(struct limine_memmap_response * memmap_res, struct 
       mmap_areas[valid_area_count].base = rounded_floor;
       valid_area_count++;
 
-      printf("base : 0x%p\n", rounded_floor);
-      printf("length : 0x%p\n", rounded_top);
-
 
       total_pages += rounded_top - rounded_floor; 
     }
@@ -55,6 +60,4 @@ void read_memmap_into_buffer(struct limine_memmap_response * memmap_res, struct 
 
   area_count = valid_area_count;
   total_usable_pages = total_pages;
-  printf("area count  : 0x%p\n", area_count);
-  printf("total pages: 0x%p\n", total_pages);
 }
