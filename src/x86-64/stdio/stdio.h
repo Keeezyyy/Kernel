@@ -4,7 +4,7 @@
 
 #include <stdarg.h>
 
-#define ALIGN_CEIL(x, align)  (((x) + (align) - 1) & ~((align) - 1))
+#define ALIGN_CEIL(x, align)  (((x) + (align) - 1) / (align)) * (align)
 
 #define LETTER_HEIGHT 13
 #define LETTER_WIDTH 8

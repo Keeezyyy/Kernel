@@ -5,6 +5,8 @@
 
 #define NULL ((void *)0)
 
+
+
 struct limine_base_revision {
     uint64_t magic0;
     uint64_t magic1;
@@ -13,6 +15,7 @@ struct limine_base_revision {
 
 
 void request();
+
 
 struct limine_hhdm_response *getHHDM();
 struct limine_framebuffer *getFB();

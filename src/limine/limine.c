@@ -33,11 +33,7 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_file_request exec_file_request = {
   .id = LIMINE_EXECUTABLE_FILE_REQUEST_ID,
   .revision = 0,
-};
-
-
-
-__attribute__((used, section(".limine_requests_end"))) static const uint64_t limine_requests_end_marker[2] = {0xadc0e0531bb10d03, 0x9572709f31764c62};
+};__attribute__((used, section(".limine_requests_end"))) static const uint64_t limine_requests_end_marker[2] = {0xadc0e0531bb10d03, 0x9572709f31764c62};
 
 void request()
 {
@@ -64,11 +60,20 @@ void request()
   struct limine_executable_address_response *tmp_exec_address = (struct limine_executable_address_response*)exec_address_request.response;
   exec_address = tmp_exec_address;
 
+  volatile uint64_t base_address = tmp_exec_address->physical_base;
+  base_address++;
+
+  if (base_address == NULL) {
+    //somthing wrong with hhdm
+    for(;;){}
+  }
+
+
   struct limine_executable_file_response *tmp_exec_file = (struct limine_executable_file_response*)exec_file_request.response;
   exec_file = tmp_exec_file;
 
-
 }
+
 
 struct limine_framebuffer *getFB()
 {

@@ -92,7 +92,7 @@ run: iso
 	qemu-system-x86_64 -monitor stdio -cdrom $(ISO_FILE)
 
 debug: iso
-	qemu-system-x86_64 -s -S -cdrom $(ISO_FILE)
+	qemu-system-x86_64 -monitor stdio -s -S -cdrom $(ISO_FILE)
 
 # ======================================
 #  Aufräumen
