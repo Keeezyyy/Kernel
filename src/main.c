@@ -8,28 +8,34 @@
 
 #define STACK_SIZE 16384
 
-static uint8_t PML4[STACK_SIZE] __attribute__((aligned(4096)));
+static uint8_t stack[STACK_SIZE] __attribute__((aligned(4096)));
 
 extern uint8_t kernel_start[];
 extern uint8_t kernel_end[];
 
 void kernel_main()
 {
-  setStack(&PML4[STACK_SIZE - 1]);
+  setStack(&stack[STACK_SIZE - 1]);
 
-  request();
+  request_return *request_values = request();
 
-
-  initSDTIO(getFB());
+  initSDTIO(get_framebuffer());
 
   init_gdt();
 
   init_idt();
 
+  //printf("%p\n", (uint64_t)get_hhdm()->offset);
+  //printf("%p\n", (uint64_t)get_memmap);
+  //printf("%p\n", (uint64_t)get_executable_address);
+  //printf("%p\n", (uint64_t)get_framebuffer);
+  //printf("%p\n", (uint64_t)get_executable_file);
 
-  init_pml4(getMEMMAP(), getHHDM(), getEXEC_ADDRESS(), getEXEC_FILE());
+  init_pml4();
+
+  malloc_physical_address(convert_virtual_to_physical((uint64_t)get_framebuffer()), 1);
 
   for (;;)
   {
-  }  
+  }
 }

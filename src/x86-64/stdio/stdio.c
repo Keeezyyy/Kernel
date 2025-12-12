@@ -8,13 +8,17 @@ void initSDTIO(void *framebuffer)
 {
 
     fb_stdio = (struct limine_framebuffer *)framebuffer;
+    init_font((uint64_t)((struct limine_framebuffer *)framebuffer)->address,fb_stdio->pitch,  fb_stdio->red_mask_shift, fb_stdio->green_mask_shift, fb_stdio->blue_mask_shift);
+    printf("fb : 0x%p\n", (uint64_t)((struct limine_framebuffer *)framebuffer)->address);
+    
+    printf("fb : 0x%p\n", getByteSize(fb_stdio));
 }
 void incPos()
 {
     posX += VERTICAL_LETTER_SPACING + LETTER_WIDTH;
 
     // TODO detect max chars per row reacged
-
+    // TODO implement scrolling 
     // posY += HORIZONTAL_LETTER_SPACING + LETTER_HEIGHT;
 }
 
@@ -27,7 +31,7 @@ void putc(char c)
         return;
     }
 
-    drawPixel(c, 200, 200, (posX), (posY), fb_stdio);
+    drawPixel(c, 200, 200, (posX), (posY));
     incPos();
 }
 

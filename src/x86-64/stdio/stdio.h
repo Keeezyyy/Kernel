@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "./font/font.h"
+#include "../../limine/limine.h"
 
 #include <stdarg.h>
 

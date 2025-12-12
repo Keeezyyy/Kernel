@@ -13,4 +13,6 @@
 
 
 
-void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y,struct limine_framebuffer *fb);
+void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y);
+void init_font(uint64_t adr, uint64_t p, uint8_t r, uint8_t g, uint8_t b);
+void putpixel( int x, int y, uint8_t r, uint8_t g, uint8_t b);

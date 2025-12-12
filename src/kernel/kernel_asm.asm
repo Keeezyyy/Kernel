@@ -11,3 +11,9 @@ setStack:
   mov rbp, rsp
   push rax
   ret
+
+global kernel_halt
+kernel_halt:
+  cli
+  hlt
+  jmp kernel_halt

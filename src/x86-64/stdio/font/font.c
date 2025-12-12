@@ -1,5 +1,13 @@
 #include "font.h"
 
+
+static uint64_t fb_address;
+static uint64_t pitch;
+
+static uint8_t red_mask_shift;
+static uint8_t green_mask_shift;
+static uint8_t blue_mask_shift;
+
 unsigned char letters[95][13] = {
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // space :32
     {0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18}, // ! :33
@@ -99,18 +107,23 @@ unsigned char letters[95][13] = {
 
 bool isPixel(char row, int x) { return (row >> x) & 1; }
 
-void putpixel(struct limine_framebuffer *fb, int x, int y,
-              uint8_t r, uint8_t g, uint8_t b)
-{
-
-  uint8_t *addr = fb->address;
-  uint64_t pitch = fb->pitch;
-
-  uint32_t *pixel = (uint32_t *)(addr + y * pitch + x * 4);
-  *pixel = (r << fb->red_mask_shift) | (g << fb->green_mask_shift) | (b << fb->blue_mask_shift);
+void init_font(uint64_t adr, uint64_t p, uint8_t r, uint8_t g, uint8_t b){
+  fb_address = adr;
+  pitch = p;
+  red_mask_shift = r;
+  green_mask_shift = g;
+  blue_mask_shift = b;
 }
 
-void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y,struct limine_framebuffer *fb)
+void putpixel(int x, int y, uint8_t r, uint8_t g, uint8_t b)
+{
+    uint8_t *addr = (uint8_t*)fb_address;
+
+    uint32_t *pixel = (uint32_t *)(addr + y * pitch + x * 4);
+    *pixel = (r << red_mask_shift) | (g << green_mask_shift) | (b << blue_mask_shift);
+}
+
+void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y)
 {
   if (c < ' ' || c > (' ' + 95))
   {
@@ -125,7 +138,7 @@ void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_
     {
       if (isPixel(row[i], 7 - k))
       {
-        putpixel(fb, start_x + k, start_y + 13 - i, 255, 255, 255);
+          putpixel( start_x + k, start_y + 13 - i, 255, 255, 255);
       }
     }
   }

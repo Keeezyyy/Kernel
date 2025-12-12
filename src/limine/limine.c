@@ -1,10 +1,14 @@
 #include "./limine.h"
 
-struct limine_framebuffer *fb;
-struct limine_hhdm_response *hhdm;
-struct limine_memmap_response *memmap;
-struct limine_executable_address_response *exec_address;
-struct limine_executable_file_response *exec_file;
+ request_return request_return_values;
+
+static struct limine_memmap_response *memmap_res = NULL;
+static struct limine_hhdm_response *hhdm_res = NULL;
+static struct limine_executable_address_response *exe_addr_res = NULL;
+static struct limine_framebuffer *fb_res = NULL;
+static struct limine_executable_file_response *exe_file_res = NULL;
+
+
 __attribute__((used, section(".limine_requests_start"))) static const uint64_t limine_requests_start_marker[4] = {0xf6b8f4b39de7d1ae, 0xfab91a6940fcb9cf, 0x785c6ed015d3e316, 0x181e920a7852b9d9};
 
 __attribute__((used, section(".limine_requests"))) volatile struct limine_base_revision base_revision_request = {
@@ -33,64 +37,94 @@ __attribute__((used, section(".limine_requests"))) static volatile struct limine
 __attribute__((used, section(".limine_requests"))) static volatile struct limine_executable_file_request exec_file_request = {
   .id = LIMINE_EXECUTABLE_FILE_REQUEST_ID,
   .revision = 0,
-};__attribute__((used, section(".limine_requests_end"))) static const uint64_t limine_requests_end_marker[2] = {0xadc0e0531bb10d03, 0x9572709f31764c62};
+};
+__attribute__((used, section(".limine_requests_end"))) static const uint64_t limine_requests_end_marker[2] = {0xadc0e0531bb10d03, 0x9572709f31764c62};
 
-void request()
+request_return *request(void)
 {
-  struct limine_framebuffer_response *fb_resp =
-    (struct limine_framebuffer_response *)framebuffer_request.response;
 
-  struct limine_framebuffer *tmp = fb_resp->framebuffers[0];
+  fb_res = framebuffer_request.response->framebuffers[0];
+  request_return_values.fb = fb_res;
 
-  fb = tmp;
-
-  // // hhdm
-  // hhdm = hhdm_request.response;
-  struct limine_hhdm_response *tmp_hhdm= (struct limine_hhdm_response*)hhdm_request.response;
-  hhdm = tmp_hhdm;
-
-  if (hhdm->offset == NULL) {
-    //somthing wrong with hhdm
-    for(;;){}
+  if(fb_res == 0x0){
+    while (1) {
+    }
   }
 
-  struct limine_memmap_response *tmp_memmap = (struct limine_memmap_response*)memmmap_request.response;
-  memmap = tmp_memmap;
+  memmap_res = memmmap_request.response;
+  request_return_values.memmap = memmap_res;
 
-  struct limine_executable_address_response *tmp_exec_address = (struct limine_executable_address_response*)exec_address_request.response;
-  exec_address = tmp_exec_address;
-
-  volatile uint64_t base_address = tmp_exec_address->physical_base;
-  base_address++;
-
-  if (base_address == NULL) {
-    //somthing wrong with hhdm
-    for(;;){}
+  if( memmap_res== 0x0){
+    while (1) {
+    }
   }
 
 
-  struct limine_executable_file_response *tmp_exec_file = (struct limine_executable_file_response*)exec_file_request.response;
-  exec_file = tmp_exec_file;
+  exe_addr_res = exec_address_request.response; 
+  request_return_values.exe_address = exe_addr_res;
 
+  if( exe_addr_res== 0x0){
+    while (1) {
+    }
+  }
+
+
+  exe_file_res = exec_file_request.response;
+  request_return_values.exe_fil = exe_file_res;
+
+  if( exe_file_res== 0x0){
+    while (1) {
+    }
+  }
+
+
+  hhdm_res = hhdm_request.response;
+  request_return_values.hhdm =hhdm_res;
+
+  if( hhdm_res== 0x0){
+    while (1) {
+    }
+  }
+
+
+  return &request_return_values;
+}
+struct limine_hhdm_response *getHHDM(){
+  return hhdm_request.response;
 }
 
-
-struct limine_framebuffer *getFB()
+struct limine_memmap_response *get_memmap(void)
 {
-  return fb;
+    return memmap_res;
 }
 
-struct limine_hhdm_response *getHHDM()
+struct limine_hhdm_response *get_hhdm(void)
 {
-  return hhdm;
+    return hhdm_res;
 }
-struct limine_memmap_response *getMEMMAP()
+
+struct limine_executable_address_response *get_executable_address(void)
 {
-  return memmap;
+    return exe_addr_res;
 }
-struct limine_executable_address_response *getEXEC_ADDRESS(){
-  return exec_address;
+
+struct limine_framebuffer *get_framebuffer(void)
+{
+    return fb_res;
 }
-struct limine_executable_file_response *getEXEC_FILE(){
-  return exec_file;
+
+struct limine_executable_file_response *get_executable_file(void)
+{
+    return exe_file_res;
+}
+
+
+uint64_t getByteSize(struct limine_framebuffer *fb)
+{
+  return fb->pitch * fb->height;
+}
+
+uint64_t getPhyAdr(struct limine_framebuffer *fb, struct limine_hhdm_response *hhdm)
+{
+  return (uint64_t)(fb->address - hhdm->offset);
 }

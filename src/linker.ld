@@ -1,9 +1,15 @@
+
 ENTRY(kernel_main)
 
 SECTIONS {
-
   . = 0xffffffff80000000;
   kernel_start = .;
+
+  .limine_requests : {
+      KEEP(*(.limine_requests_start))
+      KEEP(*(.limine_requests))
+      KEEP(*(.limine_requests_end))
+  }
 
   .text : {
       *(.text*)
@@ -11,10 +17,6 @@ SECTIONS {
 
   .rodata : {
       *(.rodata*)
-
-      KEEP(*(.limine_requests_start))
-      KEEP(*(.limine_requests))
-      KEEP(*(.limine_requests_end))
   }
 
   .data : {
@@ -22,11 +24,12 @@ SECTIONS {
   }
 
   .bss : {
-      *(.bss*) 
+      *(.bss*)
       *(COMMON)
   }
 
   kernel_end = .;
 }
+
 
 

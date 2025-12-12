@@ -2,45 +2,65 @@
 #include <stdint.h>
 #include "../stdio/stdio.h"
 #include "../../limine/types/limine_types.h"
+#include "../../kernel/kernel.h"
+#include "../../limine/limine.h"
+#include "./bitmap.h"
 
-#define ALIGN_UP_0x1000(x)  (((x) + 0xFFF) & ~0xFFF)
+#define PTE_P (1ULL << 0)
+#define PTE_RW (1ULL << 1)
+#define PTE_A (1ULL << 5)
+#define PTE_D (1ULL << 6)
 
-struct mem_area{
-  uint64_t base;
-  uint64_t top;
-};
-
-typedef struct{
-  uint8_t  present;
-  uint8_t  rw;
-  uint8_t  us;
-  uint8_t  pwt;
-  uint8_t  pcd;
-  uint8_t  accessed;
-  uint8_t  dirty;
-  uint8_t  ps;
-  uint8_t  global;
-  uint8_t  avl;            
-  uint64_t phys_addr;     
-  uint8_t  nx;
+typedef struct
+{
+  uint8_t present;
+  uint8_t rw;
+  uint8_t us;
+  uint8_t pwt;
+  uint8_t pcd;
+  uint8_t accessed;
+  uint8_t dirty;
+  uint8_t ps;
+  uint8_t global;
+  uint8_t avl;
+  uint64_t phys_addr;
+  uint8_t nx;
 } pte_params;
 #define PTE_WRITE 1
 
-typedef struct{
+typedef struct
+{
   uint16_t pml4_index;
   uint16_t pdpt_index;
   uint16_t pd_index;
   uint16_t pt_index;
-  uint16_t offset;
 } parsed_virtual_address;
 
-void init_pml4(struct limine_memmap_response *, struct limine_hhdm_response *, struct limine_executable_address_response*, struct limine_executable_file_response *);
-void read_memmap_into_buffer(struct limine_memmap_response *, struct limine_hhdm_response *);
-void fill_initial_pages(struct limine_file* ,uint64_t , struct limine_executable_address_response *);
+typedef union
+{
+  parsed_virtual_address indices;
+  uint64_t buffer;
+} table_indices;
 
-parsed_virtual_address parse_virtal_address(uint64_t address);
+// typedef struct
+// {
+//   struct limine_hhdm_response *hhdm_res;
+//   struct limine_executable_address_response *exec_res;
+//   struct limine_framebuffer *fb;
+// } pml4_params;
 
+typedef struct request_return request_return;
+void init_pml4();
+
+void finilize_new_pml4();
+void fill_upper_level(parsed_virtual_address parsed);
+void clear();
+void *malloc_physical_address(uint64_t physical_address, uint64_t length);
+table_indices find_empty_slot();
 uint64_t get_pte_physical_addresse_from_virtual_address(uint64_t address, uint64_t base_virtual, uint64_t base_physical);
 uint64_t make_pte(pte_params params);
 
-extern void set_cr3(void*);
+parsed_virtual_address parse_virtal_address(uint64_t address);
+uint64_t build_virtual_address(parsed_virtual_address addr);
+
+extern void set_cr3(void *);
