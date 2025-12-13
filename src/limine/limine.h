@@ -32,6 +32,8 @@ struct limine_executable_address_response *get_executable_address(void);
 struct limine_framebuffer *get_framebuffer(void);
 struct limine_executable_file_response *get_executable_file(void);
 
+uint64_t getHHDMOffset();
+
 struct limine_hhdm_response *getHHDM();
-uint64_t getByteSize(struct limine_framebuffer *);
-uint64_t getPhyAdr(struct limine_framebuffer *, struct limine_hhdm_response *);
+uint64_t getByteSize();
+uint64_t getPhyAdr();

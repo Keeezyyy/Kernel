@@ -26,3 +26,4 @@ void printf(const char* str, ...);
 void printHexDump(void* adr, uint16_t lines);
 
 void *memset(void *d, int c, uint64_t len);
+void memcpy(void * dst, const void * src, uint32_t n);

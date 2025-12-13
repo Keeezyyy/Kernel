@@ -4,6 +4,7 @@
 #include "../../limine/types/limine_types.h"
 #include "../../kernel/kernel.h"
 #include "../../limine/limine.h"
+#include "../../utils/utils.h"
 #include "./bitmap.h"
 
 #define PTE_P (1ULL << 0)
@@ -55,7 +56,11 @@ void init_pml4();
 void finilize_new_pml4();
 void fill_upper_level(parsed_virtual_address parsed);
 void clear();
-void *malloc_physical_address(uint64_t physical_address, uint64_t length);
+
+
+void *malloc_framebuffer();
+void *malloc_physical_address(uint64_t physical_address, uint16_t length);
+
 table_indices find_empty_slot();
 uint64_t get_pte_physical_addresse_from_virtual_address(uint64_t address, uint64_t base_virtual, uint64_t base_physical);
 uint64_t make_pte(pte_params params);

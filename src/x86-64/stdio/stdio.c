@@ -9,9 +9,7 @@ void initSDTIO(void *framebuffer)
 
     fb_stdio = (struct limine_framebuffer *)framebuffer;
     init_font((uint64_t)((struct limine_framebuffer *)framebuffer)->address,fb_stdio->pitch,  fb_stdio->red_mask_shift, fb_stdio->green_mask_shift, fb_stdio->blue_mask_shift);
-    printf("fb : 0x%p\n", (uint64_t)((struct limine_framebuffer *)framebuffer)->address);
     
-    printf("fb : 0x%p\n", getByteSize(fb_stdio));
 }
 void incPos()
 {

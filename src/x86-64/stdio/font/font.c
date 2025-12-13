@@ -108,7 +108,7 @@ unsigned char letters[95][13] = {
 bool isPixel(char row, int x) { return (row >> x) & 1; }
 
 void init_font(uint64_t adr, uint64_t p, uint8_t r, uint8_t g, uint8_t b){
-  fb_address = adr;
+   fb_address = adr;
   pitch = p;
   red_mask_shift = r;
   green_mask_shift = g;

@@ -8,6 +8,7 @@ static struct limine_executable_address_response *exe_addr_res = NULL;
 static struct limine_framebuffer *fb_res = NULL;
 static struct limine_executable_file_response *exe_file_res = NULL;
 
+static struct limine_framebuffer m_fb;
 
 __attribute__((used, section(".limine_requests_start"))) static const uint64_t limine_requests_start_marker[4] = {0xf6b8f4b39de7d1ae, 0xfab91a6940fcb9cf, 0x785c6ed015d3e316, 0x181e920a7852b9d9};
 
@@ -45,6 +46,8 @@ request_return *request(void)
 
   fb_res = framebuffer_request.response->framebuffers[0];
   request_return_values.fb = fb_res;
+
+  memcpy((void*)&m_fb, (void*)fb_res, sizeof(m_fb));
 
   if(fb_res == 0x0){
     while (1) {
@@ -119,12 +122,21 @@ struct limine_executable_file_response *get_executable_file(void)
 }
 
 
-uint64_t getByteSize(struct limine_framebuffer *fb)
-{
-  return fb->pitch * fb->height;
+uint64_t getHHDMOffset(){
+  return hhdm_res->offset;
 }
 
-uint64_t getPhyAdr(struct limine_framebuffer *fb, struct limine_hhdm_response *hhdm)
+uint64_t getByteSize()
 {
-  return (uint64_t)(fb->address - hhdm->offset);
+  printf("%p\n", m_fb.pitch);
+  printf("%p\n", m_fb.height);
+  printf("final byte size %p\n", m_fb.height*m_fb.pitch);
+  return m_fb.pitch * m_fb.height;
+}
+
+uint64_t getPhyAdr()
+{
+  
+  printf("final addres phy %p\n", m_fb.address - getHHDMOffset());
+  return (uint64_t)(m_fb.address - getHHDMOffset());
 }

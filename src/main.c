@@ -5,6 +5,7 @@
 #include "./x86-64/memory/memory.h"
 #include "./x86-64/asm_connection/asm_connect.h"
 #include "./kernel/kernel.h"
+#include "./utils/utils.h"
 
 #define STACK_SIZE 16384
 
@@ -19,21 +20,27 @@ void kernel_main()
 
   request_return *request_values = request();
 
-  initSDTIO(get_framebuffer());
+  struct limine_framebuffer *fb = get_framebuffer();
+
+
+
+  initSDTIO(fb);
 
   init_gdt();
 
   init_idt();
 
-  //printf("%p\n", (uint64_t)get_hhdm()->offset);
-  //printf("%p\n", (uint64_t)get_memmap);
-  //printf("%p\n", (uint64_t)get_executable_address);
-  //printf("%p\n", (uint64_t)get_framebuffer);
-  //printf("%p\n", (uint64_t)get_executable_file);
+  getByteSize();
+
+  getPhyAdr();
 
   init_pml4();
 
-  malloc_physical_address(convert_virtual_to_physical((uint64_t)get_framebuffer()), 1);
+  //TMRW fix the paramters and allocate the phyiscak framebuffer pages to the new pag etable 
+  malloc_framebuffer();
+
+  finilize_new_pml4();
+
 
   for (;;)
   {
