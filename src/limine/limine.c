@@ -121,6 +121,9 @@ struct limine_executable_file_response *get_executable_file(void)
     return exe_file_res;
 }
 
+struct limine_framebuffer *get_static_framebuffer(){
+  return &m_fb;
+}
 
 uint64_t getHHDMOffset(){
   return hhdm_res->offset;
@@ -139,4 +142,8 @@ uint64_t getPhyAdr()
   
   printf("final addres phy %p\n", m_fb.address - getHHDMOffset());
   return (uint64_t)(m_fb.address - getHHDMOffset());
+}
+
+void set_new_framebuffer_address(uint64_t address){
+  m_fb.address = (void*)address;
 }

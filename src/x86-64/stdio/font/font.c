@@ -7,6 +7,9 @@ static uint64_t pitch;
 static uint8_t red_mask_shift;
 static uint8_t green_mask_shift;
 static uint8_t blue_mask_shift;
+void set_new_address(uint64_t address){
+  fb_address = address;
+}
 
 unsigned char letters[95][13] = {
     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // space :32

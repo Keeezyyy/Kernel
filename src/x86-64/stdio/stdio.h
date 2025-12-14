@@ -19,7 +19,8 @@ void initSDTIO(void *fb);
 void putc(char c);
 void incPos();
 void putS(const char *str);
-
+void resPos();
+void clear_screen();
 
 void putByte(unsigned char val);
 void printf(const char* str, ...);

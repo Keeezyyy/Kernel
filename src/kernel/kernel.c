@@ -21,3 +21,9 @@ uint64_t convert_virtual_to_physical(uint64_t virtual){
   return physical_entry + (virtual- virtual_entry);
 }
 
+void kernel_panic(char* str){
+  printf("%s\n", str);
+  kernel_halt();
+
+}
+

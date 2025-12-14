@@ -51,10 +51,10 @@ typedef union
 // } pml4_params;
 
 typedef struct request_return request_return;
-void init_pml4();
+uint64_t init_pml4();
 
 void finilize_new_pml4();
-void fill_upper_level(parsed_virtual_address parsed);
+void fill_upper_level(parsed_virtual_address parsed, uint8_t offset);
 void clear();
 
 

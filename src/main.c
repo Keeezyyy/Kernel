@@ -1,5 +1,6 @@
 #include "./limine/limine.h"
 #include "./x86-64/stdio/stdio.h"
+#include "./x86-64/stdio/font/font.h"
 #include "./x86-64/gdt/gdt.h"
 #include "./x86-64/idt/idt.h"
 #include "./x86-64/memory/memory.h"
@@ -13,6 +14,8 @@ static uint8_t stack[STACK_SIZE] __attribute__((aligned(4096)));
 
 extern uint8_t kernel_start[];
 extern uint8_t kernel_end[];
+
+
 
 void kernel_main()
 {
@@ -34,14 +37,17 @@ void kernel_main()
 
   getPhyAdr();
 
-  init_pml4();
-
-  //TMRW fix the paramters and allocate the phyiscak framebuffer pages to the new pag etable 
-  malloc_framebuffer();
-
+  uint64_t new_fb_address = init_pml4();
   finilize_new_pml4();
 
 
+  //new paging ->---------------------------------------------------------------------------------------------
+  set_new_address((uint64_t)new_fb_address);
+  clear_screen();
+  resPos();
+
+  
+  printf("New paging !!\n");
   for (;;)
   {
   }

@@ -4,11 +4,11 @@ extern void kernel_main();
 static uint64_t PML4[512] __attribute__((aligned(4096)));
 static uint64_t PDPT[512] __attribute__((aligned(4096)));
 static uint64_t PD[512] __attribute__((aligned(4096)));
-static uint64_t PT[512] __attribute__((aligned(4096)));
+static uint64_t PT[2048] __attribute__((aligned(4096)));
 extern uint8_t kernel_start[];
 extern uint8_t kernel_end[];
 
-void init_pml4()
+uint64_t init_pml4()
 {
 
   clear();
@@ -18,13 +18,19 @@ void init_pml4()
   uint64_t elf_entry_page = (entry_address / 4096) * 4096;
   uint64_t size_ceil = ALIGN_UP_0x1000(file_size) / 4096;
 
+  if(size_ceil > 512)
+    kernel_panic("page limit of 512 reached in pm4 init !!!!\n");
+
   uint64_t phy_entry = (get_executable_address()->physical_base & ~0xFFFULL);
   printf("0x%p\n", phy_entry);
   printf("0x%p\n", entry_address);
 
   init_conversion(phy_entry, entry_address);
 
-  fill_upper_level(parse_virtal_address((uint64_t)((void *)kernel_start)));
+  parsed_virtual_address indices = parse_virtal_address((uint64_t)((void *)kernel_start));
+
+  printf("values : 0x%p,    0x%p,    0x%p,    0x%p,  \n ", (uint64_t)indices.pml4_index, (uint64_t)indices.pdpt_index, (uint64_t)indices.pd_index, (uint64_t)indices.pt_index);
+  fill_upper_level(parse_virtal_address((uint64_t)((void *)kernel_start)), 0);
 
   printf("0x%p\n", convert_virtual_to_physical((uint64_t)PML4));
 
@@ -50,13 +56,118 @@ void init_pml4()
       .nx = 0});
   }
 
+  //setting up pages for the framebuffer 
+  uint64_t byte_size = getByteSize();
+  uint64_t phy_address = getPhyAdr();
+
+  printf("byte size : 0x%p\n", byte_size);
+  printf("phy address : 0x%p\n", phy_address);
+
+
+
+  uint64_t huge_pages_amount = byte_size / 0x200000;
+
+  printf("huge pages count  : 0x%p\n", huge_pages_amount);
+  parsed_virtual_address parsed = parse_virtal_address((uint64_t)((void *)kernel_start));
+
+  parsed.pd_index+=+1;
+
+  uint64_t new_fb_vir_address = build_virtual_address(parsed);
+
+  for(int i = 0; i< huge_pages_amount ; i++){
+    PML4[parsed.pml4_index] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 0,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = convert_virtual_to_physical((uint64_t)PDPT),
+      .nx = 0});
+
+
+    PDPT[parsed.pdpt_index] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 0,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = convert_virtual_to_physical((uint64_t)PD),
+      .nx = 0});
+
+    PD[parsed.pd_index++] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 1,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = (uint64_t)phy_address + (i*0x200000),
+      .nx = 0});
+  }
+
+  byte_size -= huge_pages_amount * 0x200000;
+
+  uint64_t pages_amount_required = CEIL_DIV(byte_size, 0x1000);
+  uint64_t page_table_count = CEIL_DIV(pages_amount_required, 512);
+
+  printf("page table count : 0x%p\n", page_table_count) ;
+  printf("pages reqired  : 0x%p\n", pages_amount_required) ;
+
+  uint64_t inti_pd_index = parsed.pd_index;
+
+  uint64_t pages_left = pages_amount_required;
+
+  for(int i= 0; i<page_table_count; i++){
+    parsed.pd_index = inti_pd_index  + i;
+    fill_upper_level(parsed,i+1);
+
+    uint64_t entries_this_pt =
+        (pages_left >= 512) ? 512 : pages_left;
+
+    for(int k = 0; k< entries_this_pt ; k++){
+      uint64_t index_in_pt = parsed.pt_index+k + ((i+1)*512);
+
+
+      //PT[parsed.pt_index+k + ((i+1)*512)] = make_pte((pte_params){
+      PT[index_in_pt] = make_pte((pte_params){
+        .present = 1,
+        .rw = PTE_WRITE,
+        .us = 1,
+        .pwt = 1,
+        .pcd = 1,
+        .accessed = 1,
+        .dirty = 0,
+        .ps = 0,
+        .global = 1,
+        .avl = 0,
+        .phys_addr = phy_address + (k * 0x1000) + (huge_pages_amount * 0x200000),
+        .nx = 0});
+    }
+    pages_left -= entries_this_pt;
+  }
+
+
   printf("finished initilizing pml4\n");
+
+  return new_fb_vir_address;
 }
 
 void finilize_new_pml4(){
   set_cr3((void *)convert_virtual_to_physical((uint64_t)PML4));
-  while (1) {
-  }
 }
 
 void clear()
@@ -70,8 +181,9 @@ void clear()
   }
 }
 
-void fill_upper_level(parsed_virtual_address parsed)
+void fill_upper_level(parsed_virtual_address parsed, uint8_t offset)
 {
+  printf("indieces in the fill method : 0x%p,    0x%p,    0x%p,    0x%p,  \n ", (uint64_t)parsed.pml4_index, (uint64_t)parsed.pdpt_index, (uint64_t)parsed.pd_index , (uint64_t)parsed.pt_index);
   PML4[parsed.pml4_index] = make_pte((pte_params){
     .present = 1,
     .rw = PTE_WRITE,
@@ -100,6 +212,8 @@ void fill_upper_level(parsed_virtual_address parsed)
     .phys_addr = convert_virtual_to_physical((uint64_t)PD),
     .nx = 0});
 
+  uint64_t *offsettet_pt_ptr = &PT[offset*512];
+
   PD[parsed.pd_index] = make_pte((pte_params){
     .present = 1,
     .rw = PTE_WRITE,
@@ -111,12 +225,10 @@ void fill_upper_level(parsed_virtual_address parsed)
     .ps = 0,
     .global = 1,
     .avl = 0,
-    .phys_addr = convert_virtual_to_physical((uint64_t)PT),
+    .phys_addr = convert_virtual_to_physical((uint64_t)offsettet_pt_ptr),
     .nx = 0});
 
-  printf("pml4 : 0x%p\n", PML4[parsed.pml4_index]);
-  printf("pdpt : 0x%p\n", PDPT[parsed.pdpt_index]);
-  printf("pt : 0x%p\n", PD[parsed.pt_index]);
+  printf("pt index: 0x%p\n", (uint64_t)offsettet_pt_ptr);
 }
 
 uint64_t make_pte(pte_params params)
@@ -158,7 +270,7 @@ parsed_virtual_address parse_virtal_address(uint64_t address)
 
 uint64_t build_virtual_address(parsed_virtual_address addr)
 {
-  uint64_t address = 0;
+  uint64_t address = 0xFFFF000000000000;
 
   address |= (addr.pt_index & 0x1FFULL) << 12;
   address |= (addr.pd_index & 0x1FFULL) << 21;
@@ -194,47 +306,62 @@ table_indices find_empty_slot()
 void *malloc_physical_address(uint64_t physical_address, uint16_t length)
 {
   uint64_t len = length;
-  printf("phy : 0x%p,     0x%p\n", physical_address, len);
   //TODO: find slots in correct size 
   parsed_virtual_address indices = find_empty_slot().indices;
 
+  printf("physocal adress :::: 0x%p\n", physical_address);
+
   printf("values : 0x%p,    0x%p,    0x%p,    0x%p,  \n ", (uint64_t)indices.pml4_index, (uint64_t)indices.pdpt_index, (uint64_t)indices.pd_index, (uint64_t)indices.pt_index);
 
-  fill_upper_level(indices);
+  uint64_t PT_tables = CEIL_DIV(length + indices.pt_index, 512);
+  printf("length : 0x%p\n", length);
 
-  for (int i = 0; i < length; i++)
+  for(int k = 0;k < PT_tables ;k++)
   {
-    PT[indices.pt_index+i] = make_pte((pte_params){
-      .present = 1,
-      .rw = PTE_WRITE,
-      .us = 1,
-      .pwt = 1,
-      .pcd = 1,
-      .accessed = 1,
-      .dirty = 0,
-      .ps = 0,
-      .global = 1,
-      .avl = 0,
-      .phys_addr = physical_address + (i * 0x1000),
-      .nx = 0});
+    printf("pt tables : 0x%p\n", PT_tables);
+    fill_upper_level((parsed_virtual_address){
+      .pml4_index = indices.pml4_index,
+      .pdpt_index = indices.pdpt_index,
+      .pd_index = indices.pd_index + k,
+      .pt_index = indices.pt_index,
+    }, k);
+
+    for (int i = 0; i < length; i++)
+    {
+      PT[indices.pt_index+i + k*512] = make_pte((pte_params){
+        .present = 1,
+        .rw = PTE_WRITE,
+        .us = 1,
+        .pwt = 1,
+        .pcd = 1,
+        .accessed = 1,
+        .dirty = 0,
+        .ps = 0,
+        .global = 1,
+        .avl = 0,
+        .phys_addr = physical_address + (i * 0x1000),
+        .nx = 0});
+    }
+
   }
 
   printf("new vir adrd : 0x%p\n", build_virtual_address(indices));
   return (void*)build_virtual_address(indices);
 }
+
 void *malloc_framebuffer(){
   uint64_t byte_size = getByteSize();
   uint64_t phy_address = getPhyAdr();
 
   printf("byte size : 0x%p\n", byte_size);
   printf("phy address : 0x%p\n", phy_address);
-  
+
   uint64_t page_size = CEIL_DIV(byte_size, 0x1000);
   printf("page size : 0x%p\n", page_size);
 
   //void *new_fb_address = malloc_physical_address(phy_address, page_size);
-  void *new_fb_address = malloc_physical_address(phy_address, 1);
-  
+  void *new_fb_address = malloc_physical_address(phy_address, page_size);
+
   return new_fb_address;
 }
 
