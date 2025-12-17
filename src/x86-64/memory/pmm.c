@@ -103,11 +103,13 @@ uint64_t convert_index_to_address(uint32_t index){
   }
 }
 
-
-
 void set_bit_in_integral(uint8_t index, uint64_t *val){
   *val |= (1ULL << index);
 }
+void reset_bit_in_integral(uint8_t index, uint64_t *val){
+  *val &= ~(1ULL << index);
+}
+
 
 phys_addr_t pmm_alloc_frame(){
 
@@ -127,16 +129,28 @@ phys_addr_t pmm_alloc_frame(){
 
   const uint64_t total_index = (long_index * 64) + index_in_val;
   return convert_index_to_address(total_index);
-
 }
 
+//TODO: add variable in mem_area to track pages so far to increase free ans malloc performance
 
+uint32_t convert_physical_to_bitmap_index(uint64_t physical_address){
+  uint64_t rounded_pages = (physical_address / 0x1000);
 
+  uint64_t pages_counted = 0;
+ 
+  for(int i = 0; i< area_count; i++){
+    struct mem_area current_area = mmap_areas[i];
 
+    if(physical_address >= current_area.base && physical_address < current_area.top){
+      return pages_counted + ((physical_address - current_area.base) / 0x1000);
+    }else{
+      pages_counted += current_area.page_length;
+    }
 
+  }
+}
 
-
-
-void pmm_free_frame(phys_addr_t){
-
+void pmm_free_frame(phys_addr_t adr){
+    uint64_t index = convert_physical_to_bitmap_index(adr);
+    reset_bit_in_integral(index % 64, &PHY_PAGES_BITMAP[index / 64]);
 }

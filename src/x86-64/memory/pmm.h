@@ -16,7 +16,9 @@ struct mem_area{
 void claim_page(uint64_t page);
 void init_memmap();
 uint32_t getBitmapIndex(uint64_t physical_address);
+uint32_t convert_physical_to_bitmap_index(uint64_t physical_address);
 
 #define phys_addr_t uint64_t
+
 phys_addr_t pmm_alloc_frame();
 void pmm_free_frame(phys_addr_t);

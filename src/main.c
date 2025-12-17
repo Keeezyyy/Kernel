@@ -48,20 +48,14 @@ void kernel_main()
 
   for(int i = 0; i < 0x9C; i++)
     pmm_alloc_frame();
-
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
   
+  pmm_alloc_frame();
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+
+  pmm_free_frame(pmm_alloc_frame());
+  pmm_free_frame(pmm_alloc_frame());
+  pmm_free_frame(pmm_alloc_frame());
+  pmm_free_frame(pmm_alloc_frame());
   for (;;)
   {
   }
