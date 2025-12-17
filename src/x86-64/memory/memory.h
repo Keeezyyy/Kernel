@@ -1,11 +1,11 @@
 #pragma once
 #include <stdint.h>
+#include "./pmm.h"
 #include "../stdio/stdio.h"
 #include "../../limine/types/limine_types.h"
 #include "../../kernel/kernel.h"
 #include "../../limine/limine.h"
 #include "../../utils/utils.h"
-#include "./bitmap.h"
 
 #define PTE_P (1ULL << 0)
 #define PTE_RW (1ULL << 1)
@@ -37,34 +37,13 @@ typedef struct
   uint16_t pt_index;
 } parsed_virtual_address;
 
-typedef union
-{
-  parsed_virtual_address indices;
-  uint64_t buffer;
-} table_indices;
-
-// typedef struct
-// {
-//   struct limine_hhdm_response *hhdm_res;
-//   struct limine_executable_address_response *exec_res;
-//   struct limine_framebuffer *fb;
-// } pml4_params;
-
 typedef struct request_return request_return;
 uint64_t init_pml4();
-
 void finilize_new_pml4();
 void fill_upper_level(parsed_virtual_address parsed, uint8_t offset);
 void clear();
-
-
-void *malloc_framebuffer();
-void *malloc_physical_address(uint64_t physical_address, uint16_t length);
-
-table_indices find_empty_slot();
 uint64_t get_pte_physical_addresse_from_virtual_address(uint64_t address, uint64_t base_virtual, uint64_t base_physical);
 uint64_t make_pte(pte_params params);
-
 parsed_virtual_address parse_virtal_address(uint64_t address);
 uint64_t build_virtual_address(parsed_virtual_address addr);
 

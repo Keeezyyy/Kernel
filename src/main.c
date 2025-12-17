@@ -4,6 +4,7 @@
 #include "./x86-64/gdt/gdt.h"
 #include "./x86-64/idt/idt.h"
 #include "./x86-64/memory/memory.h"
+#include "./x86-64/memory/pmm.h"
 #include "./x86-64/asm_connection/asm_connect.h"
 #include "./kernel/kernel.h"
 #include "./utils/utils.h"
@@ -26,7 +27,6 @@ void kernel_main()
   struct limine_framebuffer *fb = get_framebuffer();
 
 
-
   initSDTIO(fb);
 
   init_gdt();
@@ -42,12 +42,26 @@ void kernel_main()
 
 
   //new paging ->---------------------------------------------------------------------------------------------
-  set_new_address((uint64_t)new_fb_address);
+  set_new_address(new_fb_address);
   clear_screen();
   resPos();
 
+  for(int i = 0; i < 0x9C; i++)
+    pmm_alloc_frame();
+
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
+  printf("next availible page : 0x%p\n", pmm_alloc_frame());
   
-  printf("New paging !!\n");
   for (;;)
   {
   }

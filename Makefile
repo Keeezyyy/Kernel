@@ -1,14 +1,17 @@
+
 # ======================================
 #  Tools
 # ======================================
 CC64      = x86_64-elf-gcc
+CXX64     = x86_64-elf-g++      # C++ Compiler
 LD64      = x86_64-elf-ld
 AS        = nasm
 OBJCOPY64 = x86_64-elf-objcopy
 
 # added -mcmodel=large to fix 64-bit relocation issues
-CFLAGS64  = -g -O0 -ffreestanding -fno-pie -fno-stack-protector -m64 -mcmodel=large -O2 -Wall -Wextra -mno-red-zone
-ASFLAGS64 = -f elf64
+CFLAGS64   = -g -O0 -ffreestanding -fno-pie -fno-stack-protector -m64 -mcmodel=large -O2 -Wall -Wextra -mno-red-zone
+CXXFLAGS64 = $(CFLAGS64) -fno-exceptions -fno-rtti   # C++ Flags
+ASFLAGS64  = -f elf64
 
 # Limine Pfad automatisch via Homebrew finden
 LIMINE_DIR := $(shell brew --prefix limine)/share/limine
@@ -16,11 +19,11 @@ LIMINE_DIR := $(shell brew --prefix limine)/share/limine
 # ======================================
 #  Verzeichnisse
 # ======================================
-SRC_KERNEL    = src
-BUILD        = build
-ISO_DIR      = iso
-KERNEL_DIR   = $(BUILD)/kernel
-LINKER_SCRIPT = $(SRC_KERNEL)/linker.ld
+SRC_KERNEL     = src
+BUILD          = build
+ISO_DIR        = iso
+KERNEL_DIR     = $(BUILD)/kernel
+LINKER_SCRIPT  = $(SRC_KERNEL)/linker.ld
 
 KERNEL_ELF = iso_root/boot/kernel.elf
 KERNEL_BIN = $(KERNEL_DIR)/kernel.bin
@@ -29,18 +32,20 @@ ISO_FILE   = $(ISO_DIR)/image.iso
 # ======================================
 #  Dateisuche (mit find)
 # ======================================
-KERNEL_C_SRC   = $(shell find $(SRC_KERNEL) -type f -name "*.c")
-KERNEL_ASM_SRC = $(shell find $(SRC_KERNEL) -type f -name "*.asm")
+KERNEL_C_SRC    = $(shell find $(SRC_KERNEL) -type f -name "*.c")
+KERNEL_CPP_SRC  = $(shell find $(SRC_KERNEL) -type f -name "*.cpp")
+KERNEL_ASM_SRC  = $(shell find $(SRC_KERNEL) -type f -name "*.asm")
 
-KERNEL_C_OBJ   = $(patsubst $(SRC_KERNEL)/%.c,$(KERNEL_DIR)/%.o,$(KERNEL_C_SRC))
-KERNEL_ASM_OBJ = $(patsubst $(SRC_KERNEL)/%.asm,$(KERNEL_DIR)/%.o,$(KERNEL_ASM_SRC))
+KERNEL_C_OBJ    = $(patsubst $(SRC_KERNEL)/%.c,$(KERNEL_DIR)/%.o,$(KERNEL_C_SRC))
+KERNEL_CPP_OBJ  = $(patsubst $(SRC_KERNEL)/%.cpp,$(KERNEL_DIR)/%.o,$(KERNEL_CPP_SRC))
+KERNEL_ASM_OBJ  = $(patsubst $(SRC_KERNEL)/%.asm,$(KERNEL_DIR)/%.o,$(KERNEL_ASM_SRC))
 
-KERNEL_OBJ = $(KERNEL_C_OBJ) $(KERNEL_ASM_OBJ)
+KERNEL_OBJ = $(KERNEL_C_OBJ) $(KERNEL_CPP_OBJ) $(KERNEL_ASM_OBJ)
 
 # ======================================
 #  PHONY
 # ======================================
-.PHONY: all clean run iso run-iso
+.PHONY: all clean run iso run-iso debug
 
 all: $(KERNEL_ELF)
 
@@ -50,6 +55,10 @@ all: $(KERNEL_ELF)
 $(KERNEL_DIR)/%.o: $(SRC_KERNEL)/%.c
 	mkdir -p $(dir $@)
 	$(CC64) $(CFLAGS64) -c $< -o $@
+
+$(KERNEL_DIR)/%.o: $(SRC_KERNEL)/%.cpp
+	mkdir -p $(dir $@)
+	$(CXX64) $(CXXFLAGS64) -c $< -o $@
 
 $(KERNEL_DIR)/%.o: $(SRC_KERNEL)/%.asm
 	mkdir -p $(dir $@)
@@ -87,7 +96,6 @@ $(ISO_FILE): $(KERNEL_ELF)
 # ======================================
 #  QEMU
 # ======================================
-
 run: iso
 	qemu-system-x86_64 -monitor stdio -cdrom $(ISO_FILE)
 
@@ -100,3 +108,4 @@ debug: iso
 clean:
 	rm -rf $(BUILD)
 	rm -rf $(ISO_DIR)
+
