@@ -1,6 +1,5 @@
 #include "./vmm.h"
-//TODO: make this dynamic by searching through memmap 
-#define PAGE_TABLE_OFFSET 0x10000
+#define PAGE_TABLE_OFFSET 0xffff100000000000ULL
 
 static uint64_t end_line = 0;
 
@@ -14,7 +13,7 @@ void vmm_init(uint64_t phy_start, void *PML4){
 
 
 
-uint64_t get_new_page_table_address(){
+uint64_t get_new_page_table_offset(){
   return PAGE_TABLE_OFFSET;
 }
 

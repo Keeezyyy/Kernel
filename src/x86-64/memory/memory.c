@@ -3,12 +3,26 @@ extern void kernel_main();
 
 __attribute__((section(".pml4"), aligned(4096)))
 uint64_t PML4[512];
+
+
 __attribute__((section(".pdpt"), aligned(4096)))
 uint64_t PDPT[512];
+__attribute__((section(".pdpt"), aligned(4096)))
+uint64_t NEW_PAGE_AREA_PDPT[512];
+
+
 __attribute__((section(".pd"), aligned(4096)))
 uint64_t PD[512];
+__attribute__((section(".pd"), aligned(4096)))
+uint64_t NEW_PAGE_AREA_PD[512];
+
+
 __attribute__((section(".pt"), aligned(4096)))
 uint64_t PT[2048];
+__attribute__((section(".pt"), aligned(4096)))
+uint64_t NEW_PAGE_AREA_PT[512];
+
+
 constexpr uint32_t INITIAL_TABLE_COUNT = (sizeof(PML4) + sizeof(PDPT) + sizeof(PD) + sizeof(PT)) / sizeof(PML4[0]) / 512;
 
 const uint64_t PML4_START = (uint64_t)&PML4[0];
@@ -24,57 +38,47 @@ static parsed_virtual_address heap_line;
 static uint32_t last_used_pt_index;
 
 void table_area_init() {
-    printf("PML4 : 0x%p   -    0x%p\n", &PML4[0], &PML4[sizeof(PML4)/sizeof(PML4[0])]);
-    printf("PDPT : 0x%p   -    0x%p\n", &PDPT[0], &PDPT[sizeof(PDPT)/sizeof(PDPT[0])]);
-    printf("PD : 0x%p   -    0x%p\n", &PD[0], &PD[sizeof(PD)/sizeof(PD[0])]);
-    printf("PT : 0x%p   -    0x%p\n", &PT[0], &PT[sizeof(PT)/sizeof(PT[0])]);
-    uint64_t pml4_addr   = (uint64_t)PML4;
-    uint64_t pt_end_addr = (uint64_t)PT_END;
+  printf("PML4 : 0x%p   -    0x%p\n", &PML4[0], &PML4[sizeof(PML4)/sizeof(PML4[0])]);
+  printf("PDPT : 0x%p   -    0x%p\n", &PDPT[0], &PDPT[sizeof(PDPT)/sizeof(PDPT[0])]);
+  printf("PD : 0x%p   -    0x%p\n", &PD[0], &PD[sizeof(PD)/sizeof(PD[0])]);
+  printf("PT : 0x%p   -    0x%p\n", &PT[0], &PT[sizeof(PT)/sizeof(PT[0])]);
+  uint64_t pml4_addr   = (uint64_t)PML4;
+  uint64_t pt_end_addr = (uint64_t)PT_END;
 
-    PAGE_TABLE_AREA_START =
-        pml4_addr < pt_end_addr ? pml4_addr : pt_end_addr;
+  PAGE_TABLE_AREA_START =
+    pml4_addr < pt_end_addr ? pml4_addr : pt_end_addr;
 
-    PAGE_TABLE_AREA_END =
-        pml4_addr > pt_end_addr ? pml4_addr : pt_end_addr;
+  PAGE_TABLE_AREA_END =
+    pml4_addr > pt_end_addr ? pml4_addr : pt_end_addr;
 }
 
 void init_pml4()
 {
   clear();
-
   init_memmap();
-
   table_area_init();
-  
-  printf("pml4 : 0x%p, pt : 0x%p\n", PML4, PT) ;
-  printf("table start 0x%p,  tapbe end: 0x%p\n", PAGE_TABLE_AREA_START, PAGE_TABLE_AREA_END) ;
 
-  uint64_t entry_address = (uint64_t)((void *)kernel_start);
-  uint64_t file_size = kernel_end - kernel_start;
-  uint64_t elf_entry_page = (entry_address / 4096) * 4096;
-  uint64_t size_ceil = ALIGN_UP_0x1000(file_size) / 4096;
+  const uint64_t entry_address = (uint64_t)((void *)kernel_start);
+  const uint64_t file_size = kernel_end - kernel_start;
+  const uint64_t elf_entry_page = (entry_address / 4096) * 4096;
+  const uint64_t size_ceil = ALIGN_UP_0x1000(file_size) / 4096;
 
   if (size_ceil > 512)
     kernel_panic("page limit of 512 reached in pm4 init !!!!\n");
 
+  //init new kernel mapping 
   uint64_t phy_entry = (get_executable_address()->physical_base & ~0xFFFULL);
 
   init_conversion(phy_entry, entry_address);
 
-  parsed_virtual_address indices = parse_virtal_address((uint64_t)((void *)kernel_start));
-
-  fill_upper_level(parse_virtal_address((uint64_t)((void *)kernel_start)), 0);
-
+  parsed_virtual_address indices = parse_virtal_address(entry_address);
+  fill_upper_level(parse_virtal_address(entry_address), 0);
   for (int i = 0; i < size_ceil; i++)
   {
     uint64_t phy_tmp = phy_entry + (i * 0x1000);
     uint64_t vir_tmp = entry_address + (i * 0x1000);
 
     parsed_virtual_address parsed = parse_virtal_address(vir_tmp);
-
-    if(vir_tmp >= PAGE_TABLE_AREA_START && vir_tmp <= PAGE_TABLE_AREA_END ){
-      printf("vir_tmp : 0x%p\n", vir_tmp);
-    }
 
     PT[parsed.pt_index] = make_pte((pte_params){
       .present = 1,
@@ -91,6 +95,81 @@ void init_pml4()
       .nx = 0});
   }
 
+  //init new page table mapping 
+  const uint64_t phy_page_table_entry = phy_entry + (PAGE_TABLE_AREA_START - entry_address);
+  const uint64_t virtual_page_table_address = (phy_page_table_entry & 0x000FFFFFFFFFF000ULL) + get_new_page_table_offset();
+  const uint64_t page_table_size_in_pages = (PAGE_TABLE_AREA_END - PAGE_TABLE_AREA_START) / 0x1000;
+  printf("phy page table entryy : 0x%p\n", phy_page_table_entry);
+  printf("virtual start adr  : 0x%p\n", virtual_page_table_address);
+
+  parsed_virtual_address page_table_indices = parse_virtal_address(virtual_page_table_address);
+  {
+    PML4[page_table_indices.pml4_index] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 0,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = convert_virtual_to_physical((uint64_t)NEW_PAGE_AREA_PDPT),
+      .nx = 0});
+
+    NEW_PAGE_AREA_PDPT[page_table_indices.pdpt_index] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 0,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = convert_virtual_to_physical((uint64_t)NEW_PAGE_AREA_PD),
+      .nx = 0});
+
+    NEW_PAGE_AREA_PD[page_table_indices.pd_index] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 0,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = convert_virtual_to_physical((uint64_t)NEW_PAGE_AREA_PT),
+      .nx = 0});
+  }
+
+  for (int i = 0; i < page_table_size_in_pages; i++)
+  {
+    const uint64_t phy_tmp = phy_page_table_entry + (i * 0x1000);
+
+    parsed_virtual_address parsed = parse_virtal_address(vir_tmp);
+    NEW_PAGE_AREA_PT[parsed.pt_index] = make_pte((pte_params){
+      .present = 1,
+      .rw = PTE_WRITE,
+      .us = 1,
+      .pwt = 1,
+      .pcd = 1,
+      .accessed = 1,
+      .dirty = 0,
+      .ps = 0,
+      .global = 1,
+      .avl = 0,
+      .phys_addr = phy_tmp,
+      .nx = 0});
+  }
+
+
+  uint64_t new_table_adr = build_virtual_address(page_table_indices);
+  printf("new table adt : 0x%p\n", new_table_adr);
 }
 
 uint64_t init_framebuffer_mapping(){
@@ -348,8 +427,8 @@ void *alloc_final_table_space(uint32_t size, uint64_t start_physical){
 
 void transfer_intial_page_tables()
 {
-  void* new = alloc_final_table_space(INITIAL_TABLE_COUNT, get_new_page_table_address());
-  load_initial_page_tables((void *)&PML4[0],INITIAL_TABLE_COUNT * 4096, new);
+  //void* new = alloc_final_table_space(INITIAL_TABLE_COUNT, get_new_page_table_address());
+  //load_initial_page_tables((void *)&PML4[0],INITIAL_TABLE_COUNT * 4096, new);
 
   return;
   // load_initial_page_tables(&PML4, )

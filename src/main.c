@@ -45,19 +45,12 @@ void kernel_main()
 
   //new paging ->---------------------------------------------------------------------------------------------
   set_new_address(new_fb_address);
-  while (true) {
+  while (1) {
   }
   clear_screen();
   resPos();
 
-  for(int i = 0; i < 0x9C; i++)
-    pmm_alloc_frame();
-  
-  pmm_alloc_frame();
-
   printf("next availible page : 0x%p\n", pmm_alloc_frame());
-
-  transfer_intial_page_tables();
 
   printf("cr3 : 0x%p\n", get_cr3());
   for (;;)

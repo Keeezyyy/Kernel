@@ -13,7 +13,7 @@ void vmm_free_pages(void* ptr);
 void load_initial_page_tables(void* start, uint32_t length, void* buffer);
 
 
-uint64_t get_new_page_table_address();
+uint64_t get_new_page_table_offset();
 uint64_t get_cr3();
 // pointer caching similular to cpu cache with queue structure 
 //
