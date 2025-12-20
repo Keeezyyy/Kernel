@@ -163,13 +163,3 @@ void printf(const char *str, ...)
   va_end(ap);
 }
 
-void *memset(void *d, int c, uint64_t len) {
-  uint8_t *dest = (uint8_t*)d;
-  uint8_t value = (uint8_t)c;
-
-  for (uint64_t i = 0; i < len; i++) {
-    dest[i] = value;
-  }
-
-  return d;
-}

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "./pmm.h"
+#include "./vmm.h"
 #include "../stdio/stdio.h"
 #include "../../limine/types/limine_types.h"
 #include "../../kernel/kernel.h"
@@ -38,13 +39,17 @@ typedef struct
 } parsed_virtual_address;
 
 typedef struct request_return request_return;
-uint64_t init_pml4();
+void init_pml4();
+uint64_t init_framebuffer_mapping();
 void finilize_new_pml4();
 void fill_upper_level(parsed_virtual_address parsed, uint8_t offset);
 void clear();
 uint64_t get_pte_physical_addresse_from_virtual_address(uint64_t address, uint64_t base_virtual, uint64_t base_physical);
 uint64_t make_pte(pte_params params);
+inline pte_params decode_pte(uint64_t entry);
 parsed_virtual_address parse_virtal_address(uint64_t address);
 uint64_t build_virtual_address(parsed_virtual_address addr);
+void transfer_intial_page_tables();
+void table_area_init();
 
 extern void set_cr3(void *);

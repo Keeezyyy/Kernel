@@ -18,6 +18,9 @@ void init_memmap();
 uint32_t getBitmapIndex(uint64_t physical_address);
 uint32_t convert_physical_to_bitmap_index(uint64_t physical_address);
 
+
+void request_physical_page(uint64_t);
+
 #define phys_addr_t uint64_t
 
 phys_addr_t pmm_alloc_frame();

@@ -5,6 +5,7 @@
 #include "./x86-64/idt/idt.h"
 #include "./x86-64/memory/memory.h"
 #include "./x86-64/memory/pmm.h"
+#include "./x86-64/memory/vmm.h"
 #include "./x86-64/asm_connection/asm_connect.h"
 #include "./kernel/kernel.h"
 #include "./utils/utils.h"
@@ -37,12 +38,15 @@ void kernel_main()
 
   getPhyAdr();
 
-  uint64_t new_fb_address = init_pml4();
+  init_pml4();
+  uint64_t new_fb_address = init_framebuffer_mapping();
   finilize_new_pml4();
 
 
   //new paging ->---------------------------------------------------------------------------------------------
   set_new_address(new_fb_address);
+  while (true) {
+  }
   clear_screen();
   resPos();
 
@@ -50,12 +54,12 @@ void kernel_main()
     pmm_alloc_frame();
   
   pmm_alloc_frame();
+
   printf("next availible page : 0x%p\n", pmm_alloc_frame());
 
-  pmm_free_frame(pmm_alloc_frame());
-  pmm_free_frame(pmm_alloc_frame());
-  pmm_free_frame(pmm_alloc_frame());
-  pmm_free_frame(pmm_alloc_frame());
+  transfer_intial_page_tables();
+
+  printf("cr3 : 0x%p\n", get_cr3());
   for (;;)
   {
   }

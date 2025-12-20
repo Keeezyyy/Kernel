@@ -1,5 +1,6 @@
 #include "./pmm.h"
 
+//TODO: allocate the size of this in the init process 
 static uint64_t PHY_PAGES_BITMAP[16384];
 
 static void* last_searched;
@@ -153,4 +154,12 @@ uint32_t convert_physical_to_bitmap_index(uint64_t physical_address){
 void pmm_free_frame(phys_addr_t adr){
     uint64_t index = convert_physical_to_bitmap_index(adr);
     reset_bit_in_integral(index % 64, &PHY_PAGES_BITMAP[index / 64]);
+}
+
+
+//insecure function !!!
+void request_physical_page(uint64_t address){
+    uint8_t valIndex = address / 0x1000;
+    uint8_t offset_in_area = address % 64;
+    set_bit_in_integral(offset_in_area, &PHY_PAGES_BITMAP[valIndex]);
 }

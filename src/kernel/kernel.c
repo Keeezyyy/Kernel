@@ -21,6 +21,10 @@ uint64_t convert_virtual_to_physical(uint64_t virtual_adr){
   return physical_entry + (virtual_adr- virtual_entry);
 }
 
+uint64_t convert_physical_to_virtual(uint64_t physical_adr){
+  return virtual_entry + (physical_adr - physical_entry);
+}
+
 void kernel_panic(char* str){
   printf("%s\n", str);
   kernel_halt();
