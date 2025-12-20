@@ -13,7 +13,7 @@
 #define PTE_A (1ULL << 5)
 #define PTE_D (1ULL << 6)
 
-typedef struct
+typedef struct pte_params
 {
   uint8_t present;
   uint8_t rw;
@@ -30,7 +30,7 @@ typedef struct
 } pte_params;
 #define PTE_WRITE 1
 
-typedef struct
+typedef struct parsed_virtual_address
 {
   uint16_t pml4_index;
   uint16_t pdpt_index;

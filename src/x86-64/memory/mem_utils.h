@@ -25,4 +25,5 @@ typedef struct
 // pte de-and encoding 
 uint64_t make_pte_utils(page_table_params params);
 void decode_pte_utils(uint64_t entry, page_table_params *p);
+uint64_t parse_physical_address_from_page_table_entry(uint64_t page_table_entry);
 //----------------------------------------

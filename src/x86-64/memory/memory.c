@@ -150,8 +150,10 @@ void init_pml4()
   for (int i = 0; i < page_table_size_in_pages; i++)
   {
     const uint64_t phy_tmp = phy_page_table_entry + (i * 0x1000);
+    const uint64_t vir_tmp = virtual_page_table_address + (i * 0x1000);
 
     parsed_virtual_address parsed = parse_virtal_address(vir_tmp);
+
     NEW_PAGE_AREA_PT[parsed.pt_index] = make_pte((pte_params){
       .present = 1,
       .rw = PTE_WRITE,

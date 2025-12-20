@@ -1,5 +1,9 @@
 #include "./mem_utils.h"
 
+uint64_t parse_physical_address_from_page_table_entry(uint64_t page_table_entry){
+  return (page_table_entry & 0x000FFFFFFFFFF000ULL) ;
+}
+
 void decode_pte_utils(uint64_t entry, page_table_params *p)
 {
 

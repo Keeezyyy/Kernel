@@ -45,14 +45,14 @@ void kernel_main()
 
   //new paging ->---------------------------------------------------------------------------------------------
   set_new_address(new_fb_address);
-  while (1) {
-  }
   clear_screen();
   resPos();
 
   printf("next availible page : 0x%p\n", pmm_alloc_frame());
 
   printf("cr3 : 0x%p\n", get_cr3());
+
+  vmm_alloc(0, 10);
   for (;;)
   {
   }
