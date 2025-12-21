@@ -48,11 +48,17 @@ void kernel_main()
   clear_screen();
   resPos();
 
-  printf("next availible page : 0x%p\n", pmm_alloc_frame());
 
-  printf("cr3 : 0x%p\n", get_cr3());
+  printf("HELLLLLLLO WORLD\n");
 
-  vmm_alloc(0, 10);
+
+  //void * new = vmm_alloc(0, 2);
+  init_vmm();
+
+  uint8_t* swap = load_physical_page_into_swap_page(pmm_alloc_frame());
+  printf("new swap page adr : 0x%p\n", swap);
+  swap[0] = 1;
+
   for (;;)
   {
   }
