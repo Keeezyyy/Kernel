@@ -1,4 +1,4 @@
-#include "./vmm_new.h"
+#include "./vmm.h"
 
 //UTILS
 //------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ static inline uint64_t construct_pte(pte_params params)
 
   entry |= ((uint64_t)params.nx & 1) << 63;
 
-  // printf("pte : 0x%p\n", entry);
+  // //printf("pte : 0x%p\n", entry);
   reload_cr3();
   return entry;
 }
@@ -221,13 +221,15 @@ static const parsed_virtual_address find_contigouos_slot(const uint64_t const *p
 
       for(int j = 0; j<512; j++){
         uint64_t pd_e = pd[j];
+        
 
-        if(!is_entry_present(pdpt_e))
+        if(!is_entry_present(pd_e))
           continue;
 
+        //printf("pd_e : 0x%p\n", pd_e);
         uint64_t *pt = pte_to_table_virt(pd_e);
         int slot = find_contigouos_slot_in_table(pt, size, 0, 512);
-
+        //printf("slot : 0x%p\n", slot);
         if(slot < 0)
           continue;
 
@@ -254,6 +256,7 @@ static const parsed_virtual_address find_contigouos_slot(const uint64_t const *p
 static void set_empty_pdpt_into_memory(const parsed_virtual_address indices, uint64_t *pml4){
   //new pdpt, pd, pt
   //allocating frame, clearing and mapping page into page table
+  //printf("set empty pdpt_ into memory\n");
   uint64_t pdpt_physical_address = pmm_alloc_frame();
   uint64_t* new_pdpt = get_va_from_physical_address(pdpt_physical_address);
   clear_table(new_pdpt);
@@ -274,14 +277,15 @@ static void set_empty_pdpt_into_memory(const parsed_virtual_address indices, uin
 
 }
 static void set_empty_pd_into_memory(const parsed_virtual_address indices, uint64_t *pml4, uint64_t *pdpt){
-  printf("set_empty_pd_into_memory\n");
+  //printf("set_empty_pd_into_memory\n");
 
 }
 static void set_empty_pt_into_memory(const parsed_virtual_address indices, uint64_t *pml4, uint64_t *pdpt, uint64_t *pd){
-  printf("set_empty_pt_into_memory\n");
+  //printf("set_empty_pt_into_memory\n");
 }
 static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4,const struct vm_area *area)
 {
+  //printf("alloc new mapping slot\n");
   const parsed_virtual_address starting_indices = parse_virtal_address(area->start_address);
   const parsed_virtual_address ending_indices = parse_virtal_address(area->end_address);
 
@@ -319,15 +323,6 @@ static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4,const 
           set_empty_pt_into_memory(idx, pml4, pdpt, pd);
           return idx;
         }
-
-        uint64_t *pt = pte_to_table_virt(pd_e);
-
-        for (uint16_t l = 0; l < 512; l++) {
-          if (!(pt[l] & PTE_PRESENT)) {
-            parsed_virtual_address idx = {.pml4_index=i,.pdpt_index=k,.pd_index=j,.pt_index=l};
-            return idx; // free slot in existing PT
-          }
-        }
       }
     }
   }
@@ -340,7 +335,7 @@ static void finilize_new_mapping(const parsed_virtual_address indices, uint32_t 
   uint64_t *pml4, *pdpt, *pd, *pt;
   parse_pointers_from_indices(indices, &pml4, &pdpt, &pd, &pt);
 
-  printf("pointers : 0x%p, 0x%p, 0x%p, 0x%p \n", pml4, pdpt, pd, pt);
+  //printf("pointers : 0x%p, 0x%p, 0x%p, 0x%p \n", pml4, pdpt, pd, pt);
   for (int i = 0; i < length; i++)
   {
     uint64_t physical_page = pmm_alloc_frame();
@@ -367,17 +362,20 @@ void* vmm_alloc(uint32_t size, enum virtual_mem_area_enum type){
 
   struct vm_area area = get_area(type);
 
+//printf("\n\n");
   parsed_virtual_address indices = find_contigouos_slot(pml4, &area, size);
-
   if(indices.pml4_index == 0 && indices.pdpt_index == 0 && indices.pd_index == 0 && indices.pt_index == 0){
     //no empty slot ->
     //have to create new 
     //TODO: support bigger allocations 
+    //printf("\n indieces : pml4 : 0x%p, pdpt : 0x%p, pd : 0x%p, pt : 0x%p\n", indices.pml4_index, indices.pdpt_index, indices.pd_index, indices.pt_index);
     if(size < 512)
       indices = alloc_new_mapping_slot(pml4, &area);
     if(size >= 512)
       kernel_panic("doesnt support large allocations");
   }
+
+  printf("indieces : pml4 : 0x%p, pdpt : 0x%p, pd : 0x%p, pt : 0x%p\n", indices.pml4_index, indices.pdpt_index, indices.pd_index, indices.pt_index);
 
   finilize_new_mapping(indices, size);
 

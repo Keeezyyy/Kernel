@@ -5,7 +5,7 @@
 #include "./x86-64/idt/idt.h"
 #include "./x86-64/memory/memory.h"
 #include "./x86-64/memory/pmm.h"
-#include "./x86-64/memory/vmm_new.h"
+#include "./x86-64/memory/vmm.h"
 #include "./x86-64/asm_connection/asm_connect.h"
 #include "./kernel/kernel.h"
 #include "./utils/utils.h"
@@ -54,10 +54,15 @@ void kernel_main()
   vmm_init();
 
   void *mem = vmm_alloc(256, KERNEL_HEAP);
+  printf("adr : 0x%p\n", mem);
   void *mem2 = vmm_alloc(1, KERNEL_HEAP);
+  printf("adr : 0x%p\n", mem2);
   mem2 = vmm_alloc(1, KERNEL_HEAP);
 
+  printf("adr : 0x%p\n", mem2);
+  void *mem3 = vmm_alloc(256, KERNEL_HEAP);
 
+  printf("adr : 0x%p\n", mem3);
 
   for (;;)
   {

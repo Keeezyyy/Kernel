@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include "./pmm.h"
-#include "./vmm_new.h"
+#include "./vmm.h"
 #include "../stdio/stdio.h"
 #include "../../limine/types/limine_types.h"
 #include "../../kernel/kernel.h"
