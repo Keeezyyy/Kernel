@@ -30,26 +30,26 @@ typedef struct pte_params
 } pte_params;
 #define PTE_WRITE 1
 
-typedef struct parsed_virtual_address
+typedef __attribute__((packed)) struct parsed_virtual_address
 {
   uint16_t pml4_index;
   uint16_t pdpt_index;
   uint16_t pd_index;
   uint16_t pt_index;
 } parsed_virtual_address;
-
 typedef struct request_return request_return;
+
+//initilizing
+void table_area_init();
 void init_pml4();
 uint64_t init_framebuffer_mapping();
 void finilize_new_pml4();
-void fill_upper_level(parsed_virtual_address parsed, uint8_t offset);
+
+//UTILS
 void clear();
-uint64_t get_pte_physical_addresse_from_virtual_address(uint64_t address, uint64_t base_virtual, uint64_t base_physical);
-uint64_t make_pte(pte_params params);
-inline pte_params decode_pte(uint64_t entry);
+static inline void fill_upper_level(parsed_virtual_address parsed, uint8_t offset);
+static inline uint64_t make_pte(pte_params params);
 parsed_virtual_address parse_virtal_address(uint64_t address);
 uint64_t build_virtual_address(parsed_virtual_address addr);
-void transfer_intial_page_tables();
-void table_area_init();
 
 extern void set_cr3(void *);

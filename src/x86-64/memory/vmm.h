@@ -42,7 +42,7 @@ inline struct vm_area     get_area(enum area_type type);
 inline void*              convert_paging_phys_to_vir(uint64_t phy);
 inline uint64_t           convert_paging_vir_to_phys(void* vir);
 uint64_t                  get_present_slot_in_table(uint64_t* table, uint16_t starting_index, uint16_t ending_index);
-int get_empty_slot_in_table(uint64_t *table, uint16_t starting_index, uint16_t ending_index, uint32_t length);
+int                       get_empty_slot_in_table(uint64_t *table, uint16_t starting_index, uint16_t ending_index, uint32_t length);
 uint32_t find_contiguous_empty_slots(uint64_t *table, uint64_t **out,void *prev, uint32_t prev_length,  uint32_t length);
 const parsed_virtual_address get_small_page_slot(uint64_t* pml4,uint16_t starting_index,uint16_t ending_index,uint32_t length);
 void parse_indices_to_pointer(parsed_virtual_address indices, uint64_t **out_pml4, uint64_t **out_pdpt, uint64_t **out_pd, uint64_t **out_pt);
@@ -53,14 +53,24 @@ void fill_empty_memory_slot(parsed_virtual_address indices, uint32_t length);
 inline int get_present_entry_index(uint64_t *table);
 void init_swap_page();
 void *load_physical_page_into_swap_page(uint64_t physical_page_address);
+inline void clear_table(uint64_t* table);
+void unmap_swap();
 
-parsed_virtual_address alloc_new_4k_mapping_slot(uint64_t *pml4, uint16_t starting_index, uint16_t ending_index);
-void decode_page_table_params(uint64_t entry, page_table_params *p);
-void* vmm_alloc(enum area_type type, uint32_t size);
-void  vmm_free(struct vm_area* area, void* addr);
+void set_empty_pt_into_memory(const parsed_virtual_address indices, uint64_t* pml4, uint64_t* pdpt, uint64_t *pd);
+void set_empty_pd_into_memory(const parsed_virtual_address indices, uint64_t* pml4, uint64_t* pdpt);
+void set_empty_pdpt_into_memory(const parsed_virtual_address indices, uint64_t* pml4);
+
+const parsed_virtual_address          alloc_new_mapping_slot(uint64_t *pml4, uint16_t starting_index, uint16_t ending_index);
+void                                  decode_page_table_params(uint64_t entry, page_table_params *p);
+void*                                 vmm_alloc(enum area_type type, uint32_t size);
+void                                  vmm_free(struct vm_area* area, void* addr);
+
+
+
 
 uint64_t get_new_page_table_offset();
-uint64_t get_cr3();
+static inline uint64_t get_cr3();
+static inline void reload_cr3();
 // pointer caching similular to cpu cache with queue structure 
 //
 //

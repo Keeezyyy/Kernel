@@ -52,13 +52,20 @@ void kernel_main()
   printf("HELLLLLLLO WORLD\n");
 
 
-  //void * new = vmm_alloc(0, 2);
   init_vmm();
 
-  uint8_t* swap = load_physical_page_into_swap_page(pmm_alloc_frame());
-  printf("new swap page adr : 0x%p\n", swap);
-  swap[0] = 1;
+  uint8_t* space = vmm_alloc(1, 100);
 
+  //boundary check 
+  space[0] = 1;
+  space[(100 * 4096)-1] = 1;
+
+  //new mapping page new structure
+  //first alloc phys
+  //then look which indices of the physcial mapping exist
+  //create the ones that dont exits
+  //map them correctly with correcrt indices
+  vmm_alloc(1, 500);
   for (;;)
   {
   }

@@ -36,6 +36,104 @@ extern uint8_t kernel_end[];
 
 static parsed_virtual_address heap_line;
 static uint32_t last_used_pt_index;
+static inline void fill_upper_level(parsed_virtual_address parsed, uint8_t offset)
+{
+  printf("indieces in the fill method : 0x%p,    0x%p,    0x%p,    0x%p,  \n ", (uint64_t)parsed.pml4_index, (uint64_t)parsed.pdpt_index, (uint64_t)parsed.pd_index, (uint64_t)parsed.pt_index);
+  PML4[parsed.pml4_index] = make_pte((pte_params){
+    .present = 1,
+    .rw = PTE_WRITE,
+    .us = 1,
+    .pwt = 1,
+    .pcd = 1,
+    .accessed = 1,
+    .dirty = 0,
+    .ps = 0,
+    .global = 1,
+    .avl = 0,
+    .phys_addr = convert_virtual_to_physical((uint64_t)PDPT),
+    .nx = 0});
+
+  PDPT[parsed.pdpt_index] = make_pte((pte_params){
+    .present = 1,
+    .rw = PTE_WRITE,
+    .us = 1,
+    .pwt = 1,
+    .pcd = 1,
+    .accessed = 1,
+    .dirty = 0,
+    .ps = 0,
+    .global = 1,
+    .avl = 0,
+    .phys_addr = convert_virtual_to_physical((uint64_t)PD),
+    .nx = 0});
+
+  uint64_t *offsettet_pt_ptr = &PT[offset * 512];
+
+  PD[parsed.pd_index] = make_pte((pte_params){
+    .present = 1,
+    .rw = PTE_WRITE,
+    .us = 1,
+    .pwt = 1,
+    .pcd = 1,
+    .accessed = 1,
+    .dirty = 0,
+    .ps = 0,
+    .global = 1,
+    .avl = 0,
+    .phys_addr = convert_virtual_to_physical((uint64_t)offsettet_pt_ptr),
+    .nx = 0});
+
+  printf("pt index: 0x%p\n", (uint64_t)offsettet_pt_ptr);
+}
+
+static inline uint64_t make_pte(pte_params params)
+{
+  uint64_t entry = 0;
+
+  entry |= ((uint64_t)params.present & 1) << 0;
+  entry |= ((uint64_t)params.rw & 1) << 1;
+  entry |= ((uint64_t)params.us & 1) << 2;
+  entry |= ((uint64_t)params.pwt & 1) << 3;
+  entry |= ((uint64_t)params.pcd & 1) << 4;
+  entry |= ((uint64_t)params.accessed & 1) << 5;
+  entry |= ((uint64_t)params.dirty & 1) << 6;
+  entry |= ((uint64_t)params.ps & 1) << 7;
+  entry |= ((uint64_t)params.global & 1) << 8;
+
+  entry |= ((uint64_t)params.avl & 0x7) << 9;
+
+  entry |= (params.phys_addr & 0x000FFFFFFFFFF000ULL);
+
+  entry |= ((uint64_t)params.nx & 1) << 63;
+
+  // printf("pte : 0x%p\n", entry);
+
+  return entry;
+}
+
+parsed_virtual_address parse_virtal_address(uint64_t address)
+{
+  parsed_virtual_address res;
+
+  res.pt_index = (address >> 12) & 0b111111111;
+  res.pd_index = (address >> 21) & 0b111111111;
+  res.pdpt_index = (address >> 30) & 0b111111111;
+  res.pml4_index = (address >> 39) & 0b111111111;
+
+  return res;
+}
+
+uint64_t build_virtual_address(parsed_virtual_address addr)
+{
+  uint64_t address = 0xFFFF000000000000;
+
+  address |= (addr.pt_index & 0x1FFULL) << 12;
+  address |= (addr.pd_index & 0x1FFULL) << 21;
+  address |= (addr.pdpt_index & 0x1FFULL) << 30;
+  address |= (addr.pml4_index & 0x1FFULL) << 39;
+
+  return address;
+}
 
 void table_area_init() {
   printf("PML4 : 0x%p   -    0x%p\n", &PML4[0], &PML4[sizeof(PML4)/sizeof(PML4[0])]);
@@ -299,139 +397,4 @@ void clear()
   }
 }
 
-inline void fill_upper_level(parsed_virtual_address parsed, uint8_t offset)
-{
-  printf("indieces in the fill method : 0x%p,    0x%p,    0x%p,    0x%p,  \n ", (uint64_t)parsed.pml4_index, (uint64_t)parsed.pdpt_index, (uint64_t)parsed.pd_index, (uint64_t)parsed.pt_index);
-  PML4[parsed.pml4_index] = make_pte((pte_params){
-    .present = 1,
-    .rw = PTE_WRITE,
-    .us = 1,
-    .pwt = 1,
-    .pcd = 1,
-    .accessed = 1,
-    .dirty = 0,
-    .ps = 0,
-    .global = 1,
-    .avl = 0,
-    .phys_addr = convert_virtual_to_physical((uint64_t)PDPT),
-    .nx = 0});
 
-  PDPT[parsed.pdpt_index] = make_pte((pte_params){
-    .present = 1,
-    .rw = PTE_WRITE,
-    .us = 1,
-    .pwt = 1,
-    .pcd = 1,
-    .accessed = 1,
-    .dirty = 0,
-    .ps = 0,
-    .global = 1,
-    .avl = 0,
-    .phys_addr = convert_virtual_to_physical((uint64_t)PD),
-    .nx = 0});
-
-  uint64_t *offsettet_pt_ptr = &PT[offset * 512];
-
-  PD[parsed.pd_index] = make_pte((pte_params){
-    .present = 1,
-    .rw = PTE_WRITE,
-    .us = 1,
-    .pwt = 1,
-    .pcd = 1,
-    .accessed = 1,
-    .dirty = 0,
-    .ps = 0,
-    .global = 1,
-    .avl = 0,
-    .phys_addr = convert_virtual_to_physical((uint64_t)offsettet_pt_ptr),
-    .nx = 0});
-
-  printf("pt index: 0x%p\n", (uint64_t)offsettet_pt_ptr);
-}
-
-inline uint64_t make_pte(pte_params params)
-{
-  uint64_t entry = 0;
-
-  entry |= ((uint64_t)params.present & 1) << 0;
-  entry |= ((uint64_t)params.rw & 1) << 1;
-  entry |= ((uint64_t)params.us & 1) << 2;
-  entry |= ((uint64_t)params.pwt & 1) << 3;
-  entry |= ((uint64_t)params.pcd & 1) << 4;
-  entry |= ((uint64_t)params.accessed & 1) << 5;
-  entry |= ((uint64_t)params.dirty & 1) << 6;
-  entry |= ((uint64_t)params.ps & 1) << 7;
-  entry |= ((uint64_t)params.global & 1) << 8;
-
-  entry |= ((uint64_t)params.avl & 0x7) << 9;
-
-  entry |= (params.phys_addr & 0x000FFFFFFFFFF000ULL);
-
-  entry |= ((uint64_t)params.nx & 1) << 63;
-
-  // printf("pte : 0x%p\n", entry);
-
-  return entry;
-}
-
-inline parsed_virtual_address parse_virtal_address(uint64_t address)
-{
-  parsed_virtual_address res;
-
-  res.pt_index = (address >> 12) & 0b111111111;
-  res.pd_index = (address >> 21) & 0b111111111;
-  res.pdpt_index = (address >> 30) & 0b111111111;
-  res.pml4_index = (address >> 39) & 0b111111111;
-
-  return res;
-}
-
-inline uint64_t build_virtual_address(parsed_virtual_address addr)
-{
-  uint64_t address = 0xFFFF000000000000;
-
-  address |= (addr.pt_index & 0x1FFULL) << 12;
-  address |= (addr.pd_index & 0x1FFULL) << 21;
-  address |= (addr.pdpt_index & 0x1FFULL) << 30;
-  address |= (addr.pml4_index & 0x1FFULL) << 39;
-
-  return address;
-}
-
-//take last allocated physical page entry and add pages in length of "size" and map it to "start_physical
-void *alloc_final_table_space(uint32_t size, uint64_t start_physical){
-  last_used_pt_index++;
-
-  heap_line.pt_index = last_used_pt_index;
-
-  void* res = (void*)build_virtual_address(heap_line);
-
-  for(int i = 0; i<size; i++){
-    PT[last_used_pt_index++] = make_pte((pte_params){
-      .present = 1,
-      .rw = PTE_WRITE,
-      .us = 1,
-      .pwt = 1,
-      .pcd = 1,
-      .accessed = 1,
-      .dirty = 0,
-      .ps = 0,
-      .global = 1,
-      .avl = 0,
-      .phys_addr = start_physical + (i * 0x1000),
-      .nx = 0});
-
-  }
-
-  heap_line.pt_index = last_used_pt_index;
-  return res;
-}
-
-void transfer_intial_page_tables()
-{
-  //void* new = alloc_final_table_space(INITIAL_TABLE_COUNT, get_new_page_table_address());
-  //load_initial_page_tables((void *)&PML4[0],INITIAL_TABLE_COUNT * 4096, new);
-
-  return;
-  // load_initial_page_tables(&PML4, )
-}
