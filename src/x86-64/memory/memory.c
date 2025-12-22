@@ -195,7 +195,7 @@ void init_pml4()
 
   //init new page table mapping 
   const uint64_t phy_page_table_entry = phy_entry + (PAGE_TABLE_AREA_START - entry_address);
-  const uint64_t virtual_page_table_address = (phy_page_table_entry & 0x000FFFFFFFFFF000ULL) + get_new_page_table_offset();
+  const uint64_t virtual_page_table_address = (phy_page_table_entry & 0x000FFFFFFFFFF000ULL) + vmm_get_new_page_table_offset();
   const uint64_t page_table_size_in_pages = (PAGE_TABLE_AREA_END - PAGE_TABLE_AREA_START) / 0x1000;
   printf("phy page table entryy : 0x%p\n", phy_page_table_entry);
   printf("virtual start adr  : 0x%p\n", virtual_page_table_address);

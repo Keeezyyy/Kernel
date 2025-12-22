@@ -25,6 +25,12 @@ uint64_t convert_physical_to_virtual(uint64_t physical_adr){
   return virtual_entry + (physical_adr - physical_entry);
 }
 
+void cpuid(uint32_t leaf,uint32_t* eax,uint32_t* ebx, uint32_t* ecx, uint32_t* edx)
+{
+    asm volatile("cpuid"
+        : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx)
+        : "a"(leaf), "c"(0));
+}
 void kernel_panic(char* str){
   printf("%s\n", str);
   kernel_halt();

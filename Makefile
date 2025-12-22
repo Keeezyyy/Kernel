@@ -97,7 +97,10 @@ $(ISO_FILE): $(KERNEL_ELF)
 #  QEMU
 # ======================================
 run: iso
-	qemu-system-x86_64 -monitor stdio -cdrom $(ISO_FILE)
+	qemu-system-x86_64 \
+  -cpu max \
+  -monitor stdio \
+  -cdrom iso/image.iso
 
 debug: iso
 	qemu-system-x86_64 -monitor stdio -s -S -cdrom $(ISO_FILE)

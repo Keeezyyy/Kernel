@@ -5,7 +5,7 @@
 #include "./x86-64/idt/idt.h"
 #include "./x86-64/memory/memory.h"
 #include "./x86-64/memory/pmm.h"
-#include "./x86-64/memory/vmm.h"
+#include "./x86-64/memory/vmm_new.h"
 #include "./x86-64/asm_connection/asm_connect.h"
 #include "./kernel/kernel.h"
 #include "./utils/utils.h"
@@ -51,21 +51,14 @@ void kernel_main()
 
   printf("HELLLLLLLO WORLD\n");
 
+  vmm_init();
 
-  init_vmm();
+  void *mem = vmm_alloc(256, KERNEL_HEAP);
+  void *mem2 = vmm_alloc(1, KERNEL_HEAP);
+  mem2 = vmm_alloc(1, KERNEL_HEAP);
 
-  uint8_t* space = vmm_alloc(1, 100);
 
-  //boundary check 
-  space[0] = 1;
-  space[(100 * 4096)-1] = 1;
 
-  //new mapping page new structure
-  //first alloc phys
-  //then look which indices of the physcial mapping exist
-  //create the ones that dont exits
-  //map them correctly with correcrt indices
-  vmm_alloc(1, 500);
   for (;;)
   {
   }

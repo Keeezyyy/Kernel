@@ -23,7 +23,7 @@ void decode_pte_utils(uint64_t entry, page_table_params *p)
 
     p->nx       = (entry >> 63) & 1;
 }
- uint64_t make_pte_utils(page_table_params params)
+uint64_t make_pte_utils(page_table_params params)
 {
   uint64_t entry = 0;
 
@@ -47,3 +47,5 @@ void decode_pte_utils(uint64_t entry, page_table_params *p)
 
   return entry;
 }
+
+
