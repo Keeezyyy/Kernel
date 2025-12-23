@@ -126,6 +126,19 @@ void putpixel(int x, int y, uint8_t r, uint8_t g, uint8_t b)
     *pixel = (r << red_mask_shift) | (g << green_mask_shift) | (b << blue_mask_shift);
 }
 
+void clearChar( uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y)
+{
+
+
+  for (int i = 0; i < 13; i++)
+  {
+    for (int k = 0; k < 8; k++)
+    {
+        putpixel( start_x + k, start_y + 13 - i, 0, 0, 0);
+    }
+  }
+}
+
 void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_t start_y)
 {
   if (c < ' ' || c > (' ' + 95))

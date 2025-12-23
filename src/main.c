@@ -48,7 +48,6 @@ void kernel_main()
   resPos();
 
 
-  printf("HELLLLLLLO WORLD\n");
 
   vmm_init();
 
@@ -57,7 +56,11 @@ void kernel_main()
   // Keyboard (IRQ1) AN
   pic_8259_clear_mask(1);  //maks out the timer interrupt
 
+  init_terminal();
+
   enable_irq();
+  
+
   for (;;)
   {
   }

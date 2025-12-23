@@ -7,7 +7,7 @@ void handle_keyboard_interrupt(void){
   struct key_event ke = translate_scancode(sc);
 
   if(ke.pressed)
-     putc(translate_keycode_to_asci(ke.key));
+     terminal_keyboard_intput(translate_keycode_to_asci(ke.key));
 
   send_eoi_irq(1);
   return;

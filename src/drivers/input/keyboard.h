@@ -2,6 +2,8 @@
 #include "../../hardware/hardware.h"
 #include "../../x86-64/pic/8259_pic.h"
 #include "../../x86-64/stdio/stdio.h"
+#include "../../x86-64/applications/terminal.h"
+
 typedef enum {
   SC_ESC        = 0x01,
   SC_1          = 0x02,
@@ -233,7 +235,4 @@ struct key_event {
 char translate_keycode_to_asci(Key key);
 void handle_keyboard_interrupt();
 struct key_event translate_scancode(uint8_t scancode);
-
-
-
 

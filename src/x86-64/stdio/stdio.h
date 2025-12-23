@@ -12,6 +12,10 @@
 #define VERTICAL_LETTER_SPACING 2
 #define HORIZONTAL_LETTER_SPACING 5
 
+#define bool uint8_t
+#define true 1
+#define false 0
+
 extern struct limine_framebuffer *fb_stdio;   
 
 void initSDTIO(void *fb);
@@ -21,6 +25,7 @@ void incPos();
 void putS(const char *str);
 void resPos();
 void clear_screen();
+void toggle_cursor();
 
 void putByte(unsigned char val);
 void printf(const char* str, ...);

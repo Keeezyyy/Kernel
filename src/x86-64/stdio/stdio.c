@@ -3,9 +3,10 @@
 unsigned int posX = 5;
 unsigned int posY = 5;
 
-
 uint32_t screen_width = 0;
 uint32_t screen_height = 0;
+
+bool cursor_active;
 
 struct limine_framebuffer *fb_stdio;
 
@@ -52,6 +53,7 @@ void putc(char c)
     return;
   }
 
+  clearChar( 200, 200, (posX), (posY));
   drawPixel(c, 200, 200, (posX), (posY));
   incPos();
 }
@@ -163,3 +165,14 @@ void printf(const char *str, ...)
   va_end(ap);
 }
 
+
+void toggle_cursor(){
+
+  if(cursor_active){
+    cursor_active = false;
+    drawPixel('_', 200, 200, (posX), (posY));
+  }else{
+    cursor_active = true;
+    clearChar( 200, 200, (posX), (posY));
+  }
+}

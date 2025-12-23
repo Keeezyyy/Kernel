@@ -5,6 +5,7 @@
 #include "../pic/8259_pic.h"
 #include "../../hardware/hardware.h"
 #include "../../drivers/input/keyboard.h"
+#include "../../drivers/timer/timer.h"
 
 #define KERNEL_CODE_SELECTOR 0x08
 
