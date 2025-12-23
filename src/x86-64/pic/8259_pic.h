@@ -23,7 +23,8 @@
 
 #define CASCADE_IRQ 2
 
+
 void init_pic_8259();
-void send_eoi();
+void send_eoi_irq(uint8_t irq);
 void pic_8259_clear_mask(uint8_t IRQline);
 void pic_8259_set_mask(uint8_t IRQline);

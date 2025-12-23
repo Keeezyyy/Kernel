@@ -40,4 +40,6 @@ void kernel_panic(char* str){
 void enable_irq(void){
   asm volatile ("sti");
 }
-
+void disable_irq(void){
+  asm volatile ("cli");
+}

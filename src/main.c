@@ -53,9 +53,9 @@ void kernel_main()
   vmm_init();
 
   init_pic_8259();
-  pic_8259_set_mask(0);
-  //maks out the timer interrupt
 
+  // Keyboard (IRQ1) AN
+  pic_8259_clear_mask(1);  //maks out the timer interrupt
 
   enable_irq();
   for (;;)

@@ -3,6 +3,7 @@
 #include "../stdio/stdio.h"
 #include "./isr_routines.h"
 #include "../pic/8259_pic.h"
+#include "../../hardware/hardware.h"
 
 #define KERNEL_CODE_SELECTOR 0x08
 

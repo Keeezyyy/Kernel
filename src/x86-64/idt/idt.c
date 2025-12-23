@@ -324,13 +324,21 @@ void init_idt()
 
 void interrupt_handler(uint64_t isr_num)
 {
-  printf("interrupt! %x\n", isr_num);
-  if(isr_num < 0x20){
-    for (;;)
-    {
-    }
-  }else{
-    send_eoi();
+  if (isr_num == 0x21) {
+    uint8_t sc = inb(0x60);
+    printf("key sc=%x\n", sc);
+    send_eoi_irq(1);
+    return;
   }
+  if (isr_num >= 0x20 && isr_num <= 0x2F) {
+        uint8_t irq = (uint8_t)(isr_num - 0x20);
 
+        if(isr_num != 0x20)
+          printf("hardware interrupt : 0x%p\n", isr_num);
+        send_eoi_irq(irq);
+        return;
+    }
+
+    printf("exception/int! %x\n", isr_num);
 }
+

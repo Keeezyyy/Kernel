@@ -102,6 +102,8 @@ run: iso
   -monitor stdio \
   -cdrom iso/image.iso
 
+
+
 debug: iso
 	qemu-system-x86_64 -cpu max -monitor stdio -s -S -cdrom $(ISO_FILE)
 
