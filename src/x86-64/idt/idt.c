@@ -39,7 +39,7 @@ void fill_idts()
   idt_set_entry_ex(&idt_entries[30], (uint64_t)isr_routine_31, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
   idt_set_entry_ex(&idt_entries[31], (uint64_t)isr_routine_32, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
   idt_set_entry_ex(&idt_entries[32], (uint64_t)isr_routine_33, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
-  idt_set_entry_ex(&idt_entries[33], (uint64_t)isr_routine_34, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
+  idt_set_entry_ex(&idt_entries[33], (uint64_t)keyboard_catch_wrapper, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
   idt_set_entry_ex(&idt_entries[34], (uint64_t)isr_routine_35, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
   idt_set_entry_ex(&idt_entries[35], (uint64_t)isr_routine_36, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);
   idt_set_entry_ex(&idt_entries[36], (uint64_t)isr_routine_37, 0, 1, PRIVILEGE_RING_0_KERNEL, INTERRUPT_GATE_TYPE, KERNEL_CODE_SELECTOR);

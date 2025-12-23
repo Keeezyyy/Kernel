@@ -4,6 +4,7 @@
 #include "./isr_routines.h"
 #include "../pic/8259_pic.h"
 #include "../../hardware/hardware.h"
+#include "../../drivers/input/keyboard.h"
 
 #define KERNEL_CODE_SELECTOR 0x08
 
@@ -30,18 +31,11 @@ typedef struct
   uint64_t offset;
 } __attribute__((packed)) IDTR;
 
-void idt_set_entry_ex(InterruptDescriptor64 *entry,
-                      uint64_t handler,
-                      uint8_t ist,
-                      uint8_t present,
-                      uint8_t dpl,
-                      uint8_t gate_type,
-                      uint16_t selector);
+extern void keyboard_catch_wrapper();
 
+void idt_set_entry_ex(InterruptDescriptor64 *entry, uint64_t handler, uint8_t ist, uint8_t present, uint8_t dpl, uint8_t gate_type, uint16_t selector);
 void __attribute__((nooptimize))  init_idt();
-
 void interrupt_handler(uint64_t isr_num);
-
 void fill_idts();
 
 extern void __attribute__((nooptimize)) load_idtr(void *);
