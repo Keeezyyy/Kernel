@@ -2,6 +2,10 @@
 
 // UTILS
 //------------------------------------------------------------------------------------------------------------------------------------------------------
+static inline bool is_entry_present(uint64_t entry)
+{
+  return entry & PTE_PRESENT;
+}
 static inline uint64_t construct_pte(pte_params params)
 {
   uint64_t entry = 0;
@@ -58,12 +62,15 @@ inline const struct vm_area get_area(enum virtual_mem_area_enum type)
   }
   }
 }
-/*
-static inline uint64_t *get_table_from_pte(uint64_t entry)
-{
-  return ((entry & 0x000FFFFFFFFFF000ULL)) ;
+static inline bool is_table_empty(uint64_t *table){
+  for(int i = 0; i< 512;i++){
+    if(is_entry_present(table[i])){
+      printf("[0x%p]entry : 0x%p\n", i, table[i]);
+      return false;
+    }
+  }
+  return true;
 }
-*/
 static inline bool test_bit(uint64_t val, uint8_t index)
 {
   return ((val >> index) & 1);
@@ -84,10 +91,12 @@ static inline int get_empty_slot_in_table(uint64_t *table, uint16_t start_index,
   }
   return -1;
 }
-
+static inline uint64_t get_physical_address_from_pte(uint64_t pte){
+  return pte & 0x000FFFFFFFFFF000ULL;
+}
 static inline uint64_t *pte_to_table_virt(uint64_t entry)
 {
-  uint64_t adr = entry & 0x000FFFFFFFFFF000ULL;
+  uint64_t adr = get_physical_address_from_pte(entry);
   return get_va_from_physical_address(adr);
 }
 static void parse_pointers_from_indices(parsed_virtual_address indices, uint64_t **out_pml4, uint64_t **out_pdpt, uint64_t **out_pd, uint64_t **out_pt)
@@ -111,10 +120,6 @@ static void parse_pointers_from_indices(parsed_virtual_address indices, uint64_t
 
   uint64_t pt_val = pt[indices.pt_index];
   *out_pt = &pt[indices.pt_index];
-}
-static inline bool is_entry_present(uint64_t entry)
-{
-  return entry & PTE_PRESENT;
 }
 static inline bool is_entry_huge(uint64_t entry)
 {
@@ -567,6 +572,9 @@ static void create_new_free_list_entry(uint64_t va, uint32_t size)
         slot = (struct free_list_descriptor *)build_virtual_address(indices);
 
         clear_table((void*)slot);
+
+        if(!is_table_empty((uint64_t*)slot))
+          kernel_panic("cleaing table error");
       }
     }
   }
@@ -577,21 +585,51 @@ static void create_new_free_list_entry(uint64_t va, uint32_t size)
   //printf("slot : 0x%p\n", slot);
 }
 static void free_physical_slots(uint32_t size, uint64_t *pml4, uint64_t *pdpt, uint64_t *pd, uint64_t *pt){
+  printf("freeing : 0x%p - 0x%p\n", pt, pt+size);
   for(int i = 0; i<size;i++){
     pmm_free_frame(pt[i] & 0x000FFFFFFFFFF000ULL);
     pt[i] = 0;
   }
 }
+static void free_paging_tables(uint64_t *pml4, uint64_t *pdpt, uint64_t *pd, uint64_t *pt){
+
+  printf("freeing paging tables\n");
+
+  //test if pt is empty
+  if(is_table_empty(pte_to_table_virt(*pd))){
+    pmm_free_frame(get_physical_address_from_pte(*pd));
+    *pd = 0;
+    printf("pt id empty\n");
+  }
+
+  //test if pd is empty
+  if(is_table_empty(pte_to_table_virt(*pdpt))){
+    pmm_free_frame(get_physical_address_from_pte(*pdpt));
+    *pdpt = 0;
+    printf("pd id empty\n");
+  }
+
+  //test if pdpt is empty
+  if(is_table_empty(pte_to_table_virt(*pml4))){
+    pmm_free_frame(get_physical_address_from_pte(*pml4));
+    *pml4 = 0;
+    printf("pdpt id empty\n");
+  }
+}
 static void free_slot(uint64_t va, uint32_t size){
-  //printf("freeing slot : 0x%p, for 0x%p pages \n", va, size);
+  printf("freeing slot : 0x%p, for 0x%p pages \n", va, size);
 
   const parsed_virtual_address indices = parse_virtal_address(va);
+
+  printf("indieces : 0x%p, 0x%p, 0x%p, 0x%p\n", indices.pml4_index, indices.pdpt_index, indices.pd_index, indices.pt_index);
 
   uint64_t *pml4, *pdpt, *pd, *pt;
 
   parse_pointers_from_indices(indices, &pml4, &pdpt, &pd, &pt);
 
   free_physical_slots(size, pml4, pdpt, pd, pt);
+
+  free_paging_tables(pml4, pdpt, pd, pt);
 }
 //------------------------------------------------------------------------------------------
 
@@ -649,10 +687,12 @@ void vmm_free(void *va)
           for (int m = 0; m < 4096 / sizeof(struct free_list_descriptor); m++)
           {
 
-            if (page[m].virtual_address != (uint64_t)va && page[m].size != 0)
-              //printf("FREEEING");
+            if (page[m].virtual_address == (uint64_t)va && page[m].size != 0){
               free_slot((uint64_t)va, page[m].size);
+              printf("freeing 0x%p for 0x%p bytes \n", va, page[m].size);
               return;
+            }
+
           }
         }
       }

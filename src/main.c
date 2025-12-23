@@ -52,14 +52,12 @@ void kernel_main()
   vmm_init();
 
   void *mem = vmm_alloc(256, KERNEL_HEAP);
+  void *mem2 = vmm_alloc(3, KERNEL_HEAP);
+  printf("\n\n");
+  vmm_free(mem);
+  printf("\n\n");
+  vmm_free(mem2);
 
-  vmm_free(mem);
-  mem = vmm_alloc(256, KERNEL_HEAP);
-  mem = vmm_alloc(499, KERNEL_HEAP);
-  vmm_free(mem);
-  mem = vmm_alloc(4, KERNEL_HEAP);
-  vmm_free(mem);
-  mem = vmm_alloc(256, KERNEL_HEAP);
   for (;;)
   {
   }
