@@ -103,7 +103,7 @@ run: iso
   -cdrom iso/image.iso
 
 debug: iso
-	qemu-system-x86_64 -monitor stdio -s -S -cdrom $(ISO_FILE)
+	qemu-system-x86_64 -cpu max -monitor stdio -s -S -cdrom $(ISO_FILE)
 
 # ======================================
 #  Aufräumen

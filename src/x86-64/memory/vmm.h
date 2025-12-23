@@ -36,27 +36,47 @@
 
 
 
-/*
+/*MEM AREA
  *
  *
  *
  *
  *
  * */
+//above ...
+#define START_KERNEL_HEAP     0xffffA00000000000ULL
+#define END_KERNEL_HEAP       0xffffAF0000000000ULL
+
+#define START_DIRECT_MAP     0xffffB00000000000ULL
+#define END_DIRECT_MAP       0xffffB0F000000000ULL
+
+#define START_FREE_LIST       0xffffB10000000000ULL
+#define END_FREE_LIST         0xffffB50000000000ULL
+
+
+
+
 
 
 //forward decl of memory.h util finctions
 //TODO: put these in the uitil file 
 typedef struct parsed_virtual_address parsed_virtual_address;
 typedef struct pte_params pte_params;
+
 enum virtual_mem_area_enum {
   KERNEL_HEAP,
+  FREE_LIST,
 };
-struct vm_area{
+
+__attribute__((packed)) struct vm_area{
   uint64_t start_address;
   uint64_t end_address;
 };
 
+struct free_list_descriptor{
+  uint64_t virtual_address;
+  uint32_t size;
+};
 
 void vmm_init();
 void* vmm_alloc(uint32_t size, enum virtual_mem_area_enum);
@@ -68,7 +88,8 @@ void  vmm_free(void*);
 static inline uint64_t get_cr3();
 static inline void reload_cr3();
 static inline void* get_va_from_physical_address(uint64_t physical_address);
-
+static void create_new_free_list_entry(uint64_t va, uint32_t size);
+static struct free_list_descriptor *get_empty_free_slot();
 
 
 uint64_t vmm_get_new_page_table_offset(); // gloabal function to return DIRECT_MAPPING_OFFSET

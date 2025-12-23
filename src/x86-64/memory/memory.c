@@ -132,7 +132,7 @@ uint64_t build_virtual_address(parsed_virtual_address addr)
   address |= (addr.pdpt_index & 0x1FFULL) << 30;
   address |= (addr.pml4_index & 0x1FFULL) << 39;
 
-  return address;
+  return address | 0xFFFF000000000000ULL;
 }
 
 void table_area_init() {

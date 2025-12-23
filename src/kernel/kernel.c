@@ -32,6 +32,7 @@ void cpuid(uint32_t leaf,uint32_t* eax,uint32_t* ebx, uint32_t* ecx, uint32_t* e
         : "a"(leaf), "c"(0));
 }
 void kernel_panic(char* str){
+  printf("[PANIC] : ");
   printf("%s\n", str);
   kernel_halt();
 
