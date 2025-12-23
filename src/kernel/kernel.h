@@ -18,6 +18,7 @@ void init_conversion(uint64_t phy, uint64_t vir);
 
 void cpuid(uint32_t leaf,uint32_t* eax,uint32_t* ebx, uint32_t* ecx, uint32_t* edx);
 void kernel_panic(char*);
+void enable_irq(void);
 
 extern void setStack(void*);
 extern void kernel_halt(void);

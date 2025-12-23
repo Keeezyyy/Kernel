@@ -37,4 +37,7 @@ void kernel_panic(char* str){
   kernel_halt();
 
 }
+void enable_irq(void){
+  asm volatile ("sti");
+}
 

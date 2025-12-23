@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "../stdio/stdio.h"
 #include "./isr_routines.h"
+#include "../pic/8259_pic.h"
 
 #define KERNEL_CODE_SELECTOR 0x08
 

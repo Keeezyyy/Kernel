@@ -6,6 +6,7 @@
 #include "./x86-64/memory/pmm.h"
 #include "./x86-64/memory/vmm.h"
 #include "./x86-64/asm_connection/asm_connect.h"
+#include "./x86-64/pic/8259_pic.h"
 #include "./limine/limine.h"
 #include "./kernel/kernel.h"
 #include "./utils/utils.h"
@@ -51,13 +52,12 @@ void kernel_main()
 
   vmm_init();
 
-  void *mem = vmm_alloc(256, KERNEL_HEAP);
-  void *mem2 = vmm_alloc(3, KERNEL_HEAP);
-  printf("\n\n");
-  vmm_free(mem);
-  printf("\n\n");
-  vmm_free(mem2);
+  init_pic_8259();
+  pic_8259_set_mask(0);
+  //maks out the timer interrupt
 
+
+  enable_irq();
   for (;;)
   {
   }

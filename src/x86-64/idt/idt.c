@@ -325,7 +325,12 @@ void init_idt()
 void interrupt_handler(uint64_t isr_num)
 {
   printf("interrupt! %x\n", isr_num);
-  for (;;)
-  {
+  if(isr_num < 0x20){
+    for (;;)
+    {
+    }
+  }else{
+    send_eoi();
   }
+
 }
