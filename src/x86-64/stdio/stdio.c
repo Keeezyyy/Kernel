@@ -46,6 +46,8 @@ void incPos()
 
 void putc(char c)
 {
+
+  clearChar( 200, 200, (posX), (posY));
   if (c == '\n')
   {
     posY += HORIZONTAL_LETTER_SPACING + LETTER_HEIGHT;
@@ -53,7 +55,6 @@ void putc(char c)
     return;
   }
 
-  clearChar( 200, 200, (posX), (posY));
   drawPixel(c, 200, 200, (posX), (posY));
   incPos();
 }

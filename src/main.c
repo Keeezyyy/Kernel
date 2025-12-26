@@ -47,18 +47,16 @@ void kernel_main()
   clear_screen();
   resPos();
 
-
-
   vmm_init();
 
   init_pic_8259();
 
-  // Keyboard (IRQ1) AN
-  pic_8259_clear_mask(1);  //maks out the timer interrupt
+  pic_8259_clear_mask(1);  
 
   init_terminal();
 
   enable_irq();
+
   
 
   for (;;)

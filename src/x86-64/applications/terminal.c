@@ -24,6 +24,10 @@ void new_line(){
   putc('\n');
   
   printf(terminal_root_msg);
+
+  if(command_buffer[0] == 0){
+    return;
+  }
   execute_command();
   
   printf(terminal_root_msg);
@@ -32,6 +36,8 @@ void new_line(){
 }
 
 void execute_command(){
+
+
   printf("command '");
   printf(command_buffer);
   printf("' not found\n");

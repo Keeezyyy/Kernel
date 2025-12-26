@@ -242,10 +242,9 @@ static const parsed_virtual_address find_contigouos_slot(const uint64_t const *p
         if (!is_entry_present(pd_e))
           continue;
 
-        // //printf("pd_e : 0x%p\n", pd_e);
         uint64_t *pt = pte_to_table_virt(pd_e);
         int slot = find_contigouos_slot_in_table(pt, size, 0, 512);
-        // //printf("slot : 0x%p\n", slot);
+
         if (slot < 0)
           continue;
 
@@ -295,7 +294,7 @@ static void set_empty_pt_into_memory(const parsed_virtual_address indices, uint6
 {
   // //printf("set_empty_pt_into_memory\n");
 }
-static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4, const struct vm_area *area)
+static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4, const struct vm_area *area, uint32_t size)
 {
   // //printf("alloc new mapping slot\n");
   const parsed_virtual_address starting_indices = parse_virtal_address(area->start_address);
@@ -307,7 +306,7 @@ static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4, const
   for (uint16_t i = starting_index; i <= ending_index; i++)
   {
 
-    if (!(pml4[i] & PTE_PRESENT))
+    if (!is_entry_present(pml4[i]))
     {
       parsed_virtual_address idx = {.pml4_index = i, .pdpt_index = 0, .pd_index = 0, .pt_index = 0};
       set_empty_pdpt_into_memory(idx, pml4);
@@ -320,8 +319,10 @@ static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4, const
     {
       uint64_t pdpt_e = pdpt[k];
 
+
+
       // PDPT not present -> allocate PD here
-      if (!(pdpt_e & PTE_PRESENT))
+      if (!is_entry_present(pdpt_e))
       {
         parsed_virtual_address idx = {.pml4_index = i, .pdpt_index = k, .pd_index = 0, .pt_index = 0};
         set_empty_pd_into_memory(idx, pml4, pdpt);
@@ -335,7 +336,7 @@ static const parsed_virtual_address alloc_new_mapping_slot(uint64_t *pml4, const
         uint64_t pd_e = pd[j];
 
         // PD not present -> allocate PT here
-        if (!(pd_e & PTE_PRESENT))
+        if (!is_entry_present(pd_e))
         {
           parsed_virtual_address idx = {.pml4_index = i, .pdpt_index = k, .pd_index = j, .pt_index = 0};
           set_empty_pt_into_memory(idx, pml4, pdpt, pd);
@@ -719,7 +720,7 @@ void *vmm_alloc(uint32_t size, enum virtual_mem_area_enum type)
     // TODO: support bigger allocations
     // //printf("\n indieces : pml4 : 0x%p, pdpt : 0x%p, pd : 0x%p, pt : 0x%p\n", indices.pml4_index, indices.pdpt_index, indices.pd_index, indices.pt_index);
     if (size < 512)
-      indices = alloc_new_mapping_slot(pml4, &area);
+      indices = alloc_new_mapping_slot(pml4, &area, size);
     if (size >= 512)
       kernel_panic("doesnt support large allocations");
   }
