@@ -10,6 +10,7 @@
 #define ATA_MASTER 0xE0  
 #define ATA_SLAVE  0xF0  
 
+
 #define ATA_PRIMARY_IO      0x1F0
 #define ATA_PRIMARY_CTRL    0x3F6
 
