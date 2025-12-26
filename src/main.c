@@ -10,6 +10,7 @@
 #include "./limine/limine.h"
 #include "./kernel/kernel.h"
 #include "./utils/utils.h"
+#include "./drivers/storage/ata.h"
 
 #define STACK_SIZE 16384
 
@@ -57,7 +58,7 @@ void kernel_main()
 
   enable_irq();
 
-  
+  ata_init();
 
   for (;;)
   {

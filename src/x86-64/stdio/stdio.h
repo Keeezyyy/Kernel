@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "./font/font.h"
 #include "../../limine/limine.h"
+#include "../utils/utils.h"
 
 #include <stdarg.h>
 
@@ -19,6 +20,8 @@
 extern struct limine_framebuffer *fb_stdio;   
 
 void initSDTIO(void *fb);
+
+void log(char *src, char* msg);
 
 void putc(char c);
 void incPos();

@@ -150,6 +150,22 @@ void printf(const char *str, ...)
           break;
         }
 
+        case 'B': {
+          int bi = va_arg(ap, int);   
+          for(int i = 0; i<8;i++){
+            bool is_one = test_bit(bi, i);
+
+            char c = is_one ? '1' : '0';
+
+            putc(c);
+          }
+
+          putc('\n');
+          break;
+        }
+
+
+
         default:
           putc('%');
           putc(*str);
@@ -176,4 +192,11 @@ void toggle_cursor(){
     cursor_active = true;
     clearChar( 200, 200, (posX), (posY));
   }
+}
+
+
+void log(char *src, char* msg){
+  printf("[%s] : ", src);
+  putS(msg);
+  putc('\n');
 }
