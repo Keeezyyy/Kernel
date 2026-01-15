@@ -2,7 +2,7 @@
 #include "../stdio/stdio.h"
 #include "../../kernel/kernel.h"
 
-#define CURSOR_IDENT_SPEED 7
+#define CURSOR_IDENT_SPEED 6
 
 void init_terminal();
 void terminal_keyboard_intput(char c);

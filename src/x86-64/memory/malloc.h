@@ -1,7 +1,7 @@
-#pragma once 
+#pragma once
+#include "../../utils/utils.h"
 #include <stdint.h>
 
+int k_malloc(uint32_t size, void **out);
 
-void *k_malloc(void *prefered_addresse,uint32_t size);
-
-void k_free(void *ptr);
+int k_free(void *ptr);

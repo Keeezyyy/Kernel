@@ -154,7 +154,7 @@ void drawPixel(char c, uint32_t max_x, uint32_t max_y, uint32_t start_x, uint32_
     {
       if (isPixel(row[i], 7 - k))
       {
-          putpixel( start_x + k, start_y + 13 - i, 255, 255, 255);
+                   putpixel( start_x + k, start_y + 13 - i, 255, 255, 255);
       }
     }
   }

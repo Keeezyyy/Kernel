@@ -60,11 +60,18 @@ void kernel_main()
 
   ata_init();
 
-  uint16_t buffer[256] ;
-  read_disc_sector(get_device(0),0, buffer  );
 
+
+
+  //uint16_t buffer[256] ;
+  //struct ata_device_t *device  = get_device(0);
+  //read_disc_sector(device,1, buffer  );
+
+  //printHexDump(buffer, 10);
   
 
+   
+  
 
   for (;;)
   {

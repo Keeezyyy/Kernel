@@ -1,0 +1,45 @@
+CompileFlags:
+  Add:
+    - -x
+    - c
+    # Architektur / Sprache
+    - -target
+    - x86_64-elf
+    - -std=gnu11
+    - -ffreestanding
+    - -fno-builtin
+    - -fno-stack-protector
+    - -fno-pie
+    - -m64
+    - -mcmodel=large
+    - -mno-red-zone
+
+    # WARNUNGEN (optional, aber hilfreich)
+    - -Wall
+    - -Wextra
+
+    # INCLUDE-PFADE (KRITISCH!)
+    - -Isrc
+    - -Isrc/x86-64
+    - -Isrc/x86-64/memory
+    - -Isrc/x86-64/utils
+    - -Isrc/x86-64/idt
+    - -Isrc/x86-64/pic
+    - -Isrc/x86-64/stdio
+    - -Isrc/x86-64/stdio/font
+    - -Isrc/x86-64/gdt
+    - -Isrc/x86-64/applications
+    - -Isrc/x86-64/asm_connection
+    - -Isrc/drivers
+    - -Isrc/drivers/input
+    - -Isrc/drivers/timer
+    - -Isrc/drivers/storage
+    - -Isrc/fs
+    - -Isrc/fs/fat32
+    - -Isrc/kernel
+    - -Isrc/utils
+    - -Isrc/hardware
+    - -Isrc/limine
+    - -Isrc/limine/types
+
+
