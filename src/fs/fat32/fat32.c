@@ -5,13 +5,10 @@
 int test_if_disk_is_fat32(const uint8_t const *buffer) {
   constexpr char sign[] = {0x46, 0x41, 0x54, 0x33, 0x32, 0x20, 0x20, 0x20};
 
-  printHexDump(&buffer[0x52], 5);
   for (int i = 0x52; i < 0x5A; i++) {
-    putc(buffer[i]);
     if (buffer[i] != sign[i - 0x52])
       return -1;
   }
-  printf("\n");
 
   return 0;
 }
@@ -54,6 +51,85 @@ struct FAT32_DISC *init_fat32_disc(struct ata_device_t *device, int *err) {
   return fat32_disc;
 }
 
-void *open_file(const char *const path, struct ata_device_t *device, int *err) {
+// TODO: fix it allocates one byte to much
+int go_to_path(const char *path, char **file_name) {
+  const char *cur_char = path;
 
+  int count_since_last_name = 0;
+  for (int k = 0; k < 40; k++) {
+    // printf("num : %p, char : %c\n", k, path[k]);
+    if (*cur_char == '/' || *cur_char == '\0') {
+
+      void *buffer;
+
+      if (!k_malloc(count_since_last_name + 1, &buffer)) {
+        printf("Error malloc for paht node\n");
+        return 0;
+      }
+      char *src = cur_char;
+      memcpy(buffer, src - count_since_last_name + 1, count_since_last_name);
+
+      ((uint8_t *)buffer)[count_since_last_name - 1] = '\0';
+
+      printf("name : %s, num of chars : %p\n", buffer, count_since_last_name);
+
+      if (*cur_char == '\0') {
+        *file_name = (char *)buffer;
+        return 1;
+      }
+
+      k_free(buffer);
+      count_since_last_name = 0;
+    }
+
+    count_since_last_name++;
+    cur_char++;
+  }
+  return 0;
+}
+
+// TODO:
+// Look at max posix nodes
+int deallocate_path_node(struct PATH_NODE *node) {
+  uint64_t buffer[256] = {0};
+  struct PATH_NODE *curr_node = node;
+
+  for (int k = 0; k < 256; k++) {
+    buffer[k++] = (uint64_t)curr_node->dir;
+    buffer[k] = (uint64_t)curr_node;
+
+    curr_node = curr_node->next;
+  }
+
+  for (int k = 0; k < 256; k++) {
+    if (buffer[k] != 0) {
+
+      if (!k_free((void *)buffer[k])) {
+        printf("Error freeing : %p\n", buffer[k]);
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+void *get_file(const char *const path, struct FAT32_DISC *device, int *err,
+               const void *opt_current_working_directory) {
+
+  if (path[0] == '/' || path[0] == '.') {
+    // absloute path
+    struct PATH_NODE *path_linked_list;
+
+    char *file_name;
+    if (!go_to_path(path, &file_name)) {
+      *err = -1;
+      return 0x0;
+    }
+
+    printf("\n");
+
+  } else {
+    // relative path
+    kernel_panic("Relative path finding not implemented");
+  }
 }

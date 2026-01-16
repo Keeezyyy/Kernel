@@ -24,7 +24,7 @@ static inline uint64_t construct_pte(pte_params params) {
 
   entry |= ((uint64_t)params.nx & 1) << 63;
 
-  // ////printf("pte : 0x%p\n", entry);
+  // //////printf("pte : 0x%p\n", entry);
   reload_cr3();
   return entry;
 }
@@ -57,7 +57,7 @@ inline const struct vm_area get_area(enum virtual_mem_area_enum type) {
 static inline bool is_table_empty(uint64_t *table) {
   for (int i = 0; i < 512; i++) {
     if (is_entry_present(table[i])) {
-      printf("[0x%p]entry : 0x%p\n", i, table[i]);
+      // printf("[0x%p]entry : 0x%p\n", i, table[i]);
       return false;
     }
   }
@@ -241,7 +241,7 @@ static void set_empty_pdpt_into_memory(const parsed_virtual_address indices,
                                        uint64_t *pml4) {
   // new pdpt, pd, pt
   // allocating frame, clearing and mapping page into page table
-  // //printf("set empty pdpt_ into memory\n");
+  // ////printf("set empty pdpt_ into memory\n");
   uint64_t pdpt_physical_address = pmm_alloc_frame();
   uint64_t *new_pdpt = get_va_from_physical_address(pdpt_physical_address);
   clear_table(new_pdpt);
@@ -260,17 +260,17 @@ static void set_empty_pdpt_into_memory(const parsed_virtual_address indices,
 }
 static void set_empty_pd_into_memory(const parsed_virtual_address indices,
                                      uint64_t *pml4, uint64_t *pdpt) {
-  // //printf("set_empty_pd_into_memory\n");
+  // ////printf("set_empty_pd_into_memory\n");
 }
 static void set_empty_pt_into_memory(const parsed_virtual_address indices,
                                      uint64_t *pml4, uint64_t *pdpt,
                                      uint64_t *pd) {
-  // //printf("set_empty_pt_into_memory\n");
+  // ////printf("set_empty_pt_into_memory\n");
 }
 static const parsed_virtual_address
 alloc_new_mapping_slot(uint64_t *pml4, const struct vm_area *area,
                        uint32_t size) {
-  // //printf("alloc new mapping slot\n");
+  // ////printf("alloc new mapping slot\n");
   const parsed_virtual_address starting_indices =
       parse_virtal_address(area->start_address);
   const parsed_virtual_address ending_indices =
@@ -325,7 +325,7 @@ static void finilize_new_mapping(const parsed_virtual_address indices,
   uint64_t *pml4, *pdpt, *pd, *pt;
   parse_pointers_from_indices(indices, &pml4, &pdpt, &pd, &pt);
 
-  // //printf("pointers : 0x%p, 0x%p, 0x%p, 0x%p \n", pml4, pdpt, pd, pt);
+  // ////printf("pointers : 0x%p, 0x%p, 0x%p, 0x%p \n", pml4, pdpt, pd, pt);
   for (int i = 0; i < length; i++) {
     uint64_t physical_page = pmm_alloc_frame();
     pt[i] = construct_pte((pte_params){.present = 1,
@@ -345,11 +345,11 @@ static void finilize_new_mapping(const parsed_virtual_address indices,
 
 // Free Utils
 static struct free_list_descriptor *get_empty_free_slot() {
-  // printf("x\n");
+  // //printf("x\n");
   constexpr uint16_t start_index = (START_FREE_LIST >> 39) & 0x1FF;
   constexpr uint16_t end_index = (END_FREE_LIST >> 39) & 0x1FF;
 
-  // printf("x\n");
+  // //printf("x\n");
   uint64_t *pml4 = get_pml4();
   for (int i = start_index; i <= end_index; i++) {
     uint64_t pml4_e = pml4[i];
@@ -383,7 +383,7 @@ static struct free_list_descriptor *get_empty_free_slot() {
 
           struct free_list_descriptor *page =
               (struct free_list_descriptor *)pte_to_table_virt(pt_e);
-          // printf("page : 0x%p\n", page);
+          // //printf("page : 0x%p\n", page);
 
           for (int m = 0; m < 4096 / sizeof(struct free_list_descriptor); m++) {
 
@@ -407,7 +407,7 @@ static parsed_virtual_address get_free_list_slot(uint64_t *pml4) {
   const parsed_virtual_address ending_indices =
       parse_virtal_address(END_FREE_LIST);
 
-  // printf("indices : 0x%p  -   0x%p\n", starting_indices.pml4_index,
+  // //printf("indices : 0x%p  -   0x%p\n", starting_indices.pml4_index,
   // ending_indices.pml4_index);
 
   // TODO: support larger pages
@@ -434,10 +434,10 @@ static parsed_virtual_address get_free_list_slot(uint64_t *pml4) {
         if (!is_entry_present(pd_e))
           continue;
 
-        // //printf("pd_e : 0x%p\n", pd_e);
+        // ////printf("pd_e : 0x%p\n", pd_e);
         uint64_t *pt = pte_to_table_virt(pd_e);
         int slot = find_contigouos_slot_in_table(pt, size, 0, 512);
-        // //printf("slot : 0x%p\n", slot);
+        // ////printf("slot : 0x%p\n", slot);
         if (slot < 0)
           continue;
 
@@ -509,17 +509,17 @@ alloc_new_free_list_mapping_slot(uint64_t *pml4) {
   kernel_panic("OOM in paging area");
 }
 static void create_new_free_list_entry(uint64_t va, uint32_t size) {
-  // printf("test\n");
+  // //printf("test\n");
   struct free_list_descriptor *slot = get_empty_free_slot();
 
-  // printf("sdfsf\n");
+  // //printf("sdfsf\n");
   if ((slot < START_FREE_LIST || slot > END_FREE_LIST) && slot != 0) {
-    // printf("slot : 0x%p\n", slot);
+    // //printf("slot : 0x%p\n", slot);
     // TODO: find better infavlid adr checKer
     // kernel_panic("something went wrong searching for free slot ");
   }
 
-  // printf("test\n");
+  // //printf("test\n");
   if (slot == 0x0) {
     // Mallocing new page for slot
     {
@@ -544,11 +544,11 @@ static void create_new_free_list_entry(uint64_t va, uint32_t size) {
   // TODO: fix this initual bits issue
   slot->virtual_address = va;
   slot->size = size;
-  // printf("slot : 0x%p\n", slot);
+  // //printf("slot : 0x%p\n", slot);
 }
 static void free_physical_slots(uint32_t size, uint64_t *pml4, uint64_t *pdpt,
                                 uint64_t *pd, uint64_t *pt) {
-  printf("freeing : 0x%p - 0x%p\n", pt, pt + size);
+  // printf("freeing : 0x%p - 0x%p\n", pt, pt + size);
   for (int i = 0; i < size; i++) {
     pmm_free_frame(pt[i] & 0x000FFFFFFFFFF000ULL);
     pt[i] = 0;
@@ -557,36 +557,36 @@ static void free_physical_slots(uint32_t size, uint64_t *pml4, uint64_t *pdpt,
 static void free_paging_tables(uint64_t *pml4, uint64_t *pdpt, uint64_t *pd,
                                uint64_t *pt) {
 
-  printf("freeing paging tables\n");
+  // printf("freeing paging tables\n");
 
   // test if pt is empty
   if (is_table_empty(pte_to_table_virt(*pd))) {
     pmm_free_frame(get_physical_address_from_pte(*pd));
     *pd = 0;
-    printf("pt id empty\n");
+    // printf("pt id empty\n");
   }
 
   // test if pd is empty
   if (is_table_empty(pte_to_table_virt(*pdpt))) {
     pmm_free_frame(get_physical_address_from_pte(*pdpt));
     *pdpt = 0;
-    printf("pd id empty\n");
+    // printf("pd id empty\n");
   }
 
   // test if pdpt is empty
   if (is_table_empty(pte_to_table_virt(*pml4))) {
     pmm_free_frame(get_physical_address_from_pte(*pml4));
     *pml4 = 0;
-    printf("pdpt id empty\n");
+    // printf("pdpt id empty\n");
   }
 }
 static void free_slot(uint64_t va, uint32_t size) {
-  printf("freeing slot : 0x%p, for 0x%p pages \n", va, size);
+  // printf("freeing slot : 0x%p, for 0x%p pages \n", va, size);
 
   const parsed_virtual_address indices = parse_virtal_address(va);
 
-  printf("indieces : 0x%p, 0x%p, 0x%p, 0x%p\n", indices.pml4_index,
-         indices.pdpt_index, indices.pd_index, indices.pt_index);
+  // printf("indieces : 0x%p, 0x%p, 0x%p, 0x%p\n", indices.pml4_index,
+  // indices.pdpt_index, indices.pd_index, indices.pt_index);
 
   uint64_t *pml4, *pdpt, *pd, *pt;
 
@@ -603,9 +603,9 @@ int vmm_free(void *va) {
   constexpr uint16_t start_index = (START_FREE_LIST >> 39) & 0x1FF;
   constexpr uint16_t end_index = (END_FREE_LIST >> 39) & 0x1FF;
 
-  printf("freeing : 0x%p\n", va);
+  // printf("freeing : 0x%p\n", va);
   uint64_t *pml4 = get_pml4();
-  // printf("pml4 : 0x%p\n", pml4);
+  // //printf("pml4 : 0x%p\n", pml4);
   for (int i = start_index; i <= end_index; i++) {
     uint64_t pml4_e = pml4[i];
 
@@ -614,8 +614,8 @@ int vmm_free(void *va) {
 
     uint64_t *pdpt = pte_to_table_virt(pml4_e);
 
-    // printf("pml4_e : 0x%p\n", pml4_e);
-    // printf("pdpt : 0x%p\n", pdpt);
+    // //printf("pml4_e : 0x%p\n", pml4_e);
+    // //printf("pdpt : 0x%p\n", pdpt);
     for (int k = 0; k < 512; k++) {
       uint64_t pdpt_e = pdpt[k];
 
@@ -623,9 +623,9 @@ int vmm_free(void *va) {
         continue;
 
       uint64_t *pd = pte_to_table_virt(pdpt_e);
-      // printf("pdpt_e : 0x%p\n", pdpt_e);
+      // //printf("pdpt_e : 0x%p\n", pdpt_e);
 
-      // printf("pd : 0x%p\n", pd);
+      // //printf("pd : 0x%p\n", pd);
       for (int j = 0; j < 512; j++) {
         uint64_t pd_e = pd[j];
 
@@ -634,7 +634,7 @@ int vmm_free(void *va) {
 
         uint64_t *pt = pte_to_table_virt(pd_e);
 
-        // printf("pt : 0x%p\n", pt);
+        // //printf("pt : 0x%p\n", pt);
         for (int p = 0; p < 512; p++) {
           uint64_t pt_e = pt[p];
 
@@ -643,13 +643,13 @@ int vmm_free(void *va) {
 
           struct free_list_descriptor *page =
               (struct free_list_descriptor *)pte_to_table_virt(pt_e);
-          // printf("page : 0x%p\n", page);
+          // //printf("page : 0x%p\n", page);
 
           for (int m = 0; m < 4096 / sizeof(struct free_list_descriptor); m++) {
 
             if (page[m].virtual_address == (uint64_t)va && page[m].size != 0) {
               free_slot((uint64_t)va, page[m].size);
-              printf("freeing 0x%p for 0x%p bytes \n", va, page[m].size);
+              // printf("freeing 0x%p for 0x%p bytes \n", va, page[m].size);
               return 0;
             }
           }
@@ -672,14 +672,14 @@ void *vmm_alloc(uint32_t size, enum virtual_mem_area_enum type,
 
   struct vm_area area = get_area(type);
 
-  // //printf("\n\n");
+  // ////printf("\n\n");
   parsed_virtual_address indices = find_contigouos_slot(pml4, &area, size);
   if (indices.pml4_index == 0 && indices.pdpt_index == 0 &&
       indices.pd_index == 0 && indices.pt_index == 0) {
     // no empty slot ->
     // have to create new
     // TODO: support bigger allocations
-    // //printf("\n indieces : pml4 : 0x%p, pdpt : 0x%p, pd : 0x%p, pt :
+    // ////printf("\n indieces : pml4 : 0x%p, pdpt : 0x%p, pd : 0x%p, pt :
     // 0x%p\n", indices.pml4_index, indices.pdpt_index, indices.pd_index,
     // indices.pt_index);
     if (size < 512)
@@ -687,11 +687,6 @@ void *vmm_alloc(uint32_t size, enum virtual_mem_area_enum type,
     if (size >= 512)
       kernel_panic("doesnt support large allocations");
   }
-
-  printf("indieces : pml4 : 0x%p, pdpt : 0x%p, pd : 0x%p, pt : 0x%p\n",
-         indices.pml4_index, indices.pdpt_index, indices.pd_index,
-         indices.pt_index);
-
   finilize_new_mapping(indices, size);
 
   uint64_t va = build_virtual_address(indices);

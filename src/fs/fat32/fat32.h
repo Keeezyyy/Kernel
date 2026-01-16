@@ -1,5 +1,6 @@
 #pragma once
 #include "../../drivers/storage/ata.h"
+#include "../../utils/containers.h"
 #include "../../x86-64/memory/malloc.h"
 #include "../../x86-64/stdio/stdio.h"
 
@@ -48,6 +49,13 @@ struct __attribute__((packed)) FAT32_DISC {
   struct FAT_32_BPB *bpb;
 };
 
-void *open_file(const char *const path, struct ata_device_t *device, int *err);
+struct PATH_NODE {
+  struct PATH_NODE *next;
+  const char *dir;
+};
 
+void *get_file(const char *const path, struct FAT32_DISC *device, int *err,
+               const void *opt_current_working_directory);
 struct FAT32_DISC *init_fat32_disc(struct ata_device_t *device, int *err);
+
+int go_to_path(const char *path, char **file_name);

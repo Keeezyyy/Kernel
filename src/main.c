@@ -2,6 +2,7 @@
 #include "./fs/fat32/fat32.h"
 #include "./kernel/kernel.h"
 #include "./limine/limine.h"
+#include "./utils/containers.h"
 #include "./utils/utils.h"
 #include "./x86-64/asm_connection/asm_connect.h"
 #include "./x86-64/gdt/gdt.h"
@@ -66,7 +67,8 @@ void kernel_main() {
 
   printf("%s\n", fat_device->bpb->BS_OEMName);
 
-  // printHexDump(buffer, 10);
+  void *file =
+      get_file("/home/hurensohn/bastard/test.txt", fat_device, &err, NULL);
 
   for (;;) {
   }
