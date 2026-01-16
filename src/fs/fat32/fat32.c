@@ -47,18 +47,45 @@ struct FAT32_DISC *init_fat32_disc(struct ata_device_t *device, int *err) {
   }
 
   fat32_disc->bpb = bpb_object;
+  fat32_disc->ata_device = device;
+  fat32_disc->bpb_lba_start = BPB_LBA_OFFSET;
 
   return fat32_disc;
 }
 
+uint64_t get_fat_start(struct FAT32_DISC *device) {
+  return device->bpb_lba_start +
+         ((device->bpb->BPB_RsvdSecCnt * device->bpb->BPB_BytsPerSec) /
+          ATA_BYTES_PER_SECTOR);
+}
+
+void *get_fat_entry(struct FAT32_DISC *device, const char const *dir_name) {
+  uint64_t fat_start = get_fat_start(device);
+  printf("fat start : %p\n", fat_start);
+  printf("bpb starbpb start%p\n", device->bpb_lba_start);
+}
+
+int change_directory(struct FAT32_DISC *device, const char const *dir_name) {
+  printf("dir name : %s\n", dir_name);
+
+  get_fat_entry(device, dir_name);
+  return 1;
+}
+
 // TODO: fix it allocates one byte to much
-int go_to_path(const char *path, char **file_name) {
+int go_to_path(const char *path, char **file_name, struct FAT32_DISC *device) {
   const char *cur_char = path;
 
   int count_since_last_name = 0;
   for (int k = 0; k < 40; k++) {
     // printf("num : %p, char : %c\n", k, path[k]);
     if (*cur_char == '/' || *cur_char == '\0') {
+
+      if (count_since_last_name == 0) {
+        count_since_last_name++;
+        cur_char++;
+        continue;
+      }
 
       void *buffer;
 
@@ -70,15 +97,21 @@ int go_to_path(const char *path, char **file_name) {
       memcpy(buffer, src - count_since_last_name + 1, count_since_last_name);
 
       ((uint8_t *)buffer)[count_since_last_name - 1] = '\0';
-
-      printf("name : %s, num of chars : %p\n", buffer, count_since_last_name);
-
       if (*cur_char == '\0') {
         *file_name = (char *)buffer;
         return 1;
       }
 
-      k_free(buffer);
+      if (!change_directory(device, buffer)) {
+        printf("Error changing driectory to : %s", buffer);
+        k_free(buffer);
+        return 0;
+      }
+
+      if (!k_free(buffer)) {
+        printf("Error freeing in go_to_path\n");
+        return 0;
+      }
       count_since_last_name = 0;
     }
 
@@ -121,12 +154,17 @@ void *get_file(const char *const path, struct FAT32_DISC *device, int *err,
     struct PATH_NODE *path_linked_list;
 
     char *file_name;
-    if (!go_to_path(path, &file_name)) {
+    if (!go_to_path(path, &file_name, device)) {
       *err = -1;
       return 0x0;
     }
 
-    printf("\n");
+    printf("file name : %s\n", file_name);
+
+    if (!k_free(file_name)) {
+      printf("Error freeing in go_to_path\n");
+      return 0;
+    }
 
   } else {
     // relative path

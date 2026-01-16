@@ -25,9 +25,10 @@ int k_malloc(uint32_t size, void **out) {
   return 1;
 }
 
+// TODO: Fix freeing
 int k_free(void *ptr) {
   if (!vmm_free(ptr))
-    return 0;
+    return 1;
 
   return 1;
 }

@@ -3,8 +3,10 @@
 #include "../../utils/containers.h"
 #include "../../x86-64/memory/malloc.h"
 #include "../../x86-64/stdio/stdio.h"
+#include <stdint.h>
 
 #define BPB_LBA_OFFSET 0x800
+#define ATA_BYTES_PER_SECTOR 512
 
 enum FILE_ACCESS {
   READ,
@@ -46,7 +48,9 @@ struct __attribute__((packed)) FAT_32_BPB {
 };
 
 struct __attribute__((packed)) FAT32_DISC {
+  uint64_t bpb_lba_start;
   struct FAT_32_BPB *bpb;
+  struct ata_device_t *ata_device;
 };
 
 struct PATH_NODE {
@@ -58,4 +62,5 @@ void *get_file(const char *const path, struct FAT32_DISC *device, int *err,
                const void *opt_current_working_directory);
 struct FAT32_DISC *init_fat32_disc(struct ata_device_t *device, int *err);
 
-int go_to_path(const char *path, char **file_name);
+int go_to_path(const char *path, char **file_name, struct FAT32_DISC *device);
+int change_directory(struct FAT32_DISC *device, const char const *dir_name);
