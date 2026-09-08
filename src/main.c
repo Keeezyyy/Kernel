@@ -46,6 +46,23 @@ static void _test(void) {
 
   *(volatile uint64_t *)0x0000700000000000ull = 1;
   output->int 0xE
+
+  // pmm alloc test
+
+  u64 val = 0;
+  pmm_alloc(&val);
+  debug_printf("[%d] : adr :0x%016llx \n", 0, val);
+
+  pmm_alloc(&val);
+  debug_printf("[%d] : adr :0x%016llx \n", 1, val);
+
+  pmm_alloc(&val);
+  debug_printf("[%d] : adr :0x%016llx \n", 2, val);
+
+  debug_printf("ret : %d\n", pmm_free(val)); -> 0
+  debug_printf("ret : %d\n", pmm_free(0x0000000000015000)); -> 0
+  debug_printf("ret : %d\n", pmm_free(val)); -> 1 already freed
+
   */
 }
 
