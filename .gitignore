@@ -66,3 +66,6 @@ cscope.*
 .Trashes
 Thumbs.db
 desktop.ini
+
+# clangd-Flags werden aus dem Makefile erzeugt ("make lsp")
+compile_flags.txt

@@ -1,7 +1,6 @@
 #include "idt.h"
 
 #include "../../../debug/debug.h"
-#include "../../../utils/utils.h"
 #include <stdint.h>
 
 extern uint8_t isr_stub_table[256][ISR_STUB_SIZE];
@@ -9,7 +8,7 @@ extern uint8_t isr_stub_table[256][ISR_STUB_SIZE];
 static union idt_entry idt_buffer[IDT_ENTRY_COUNT];
 static idt_ptr_t idtr;
 
-void _init_idt_entries(void) {
+static void _init_idt_entries(void) {
   // union idt_entry tmp = BUILD_GATE_DESCRIPTOR(&isr_wrapper, KERNEL_CODE_SELECTOR, 0, INTERRUPT_GATE_TYPE, PRIVILEGE_RING_0_KERNEL);
 
   for (int i = 0; i < 256; i++) {
@@ -22,8 +21,7 @@ void _init_idt_entries(void) {
 void global_interrupt_handler(uint16_t interrupt_num) {
   debug_printf("[interrupt] : 0x%x\n", interrupt_num);
 
-  while (1) {
-  }
+  panic("interrupt");
 }
 
 void init_idt(void) {
@@ -33,4 +31,6 @@ void init_idt(void) {
   idtr.limit = sizeof(idt_buffer) - 1;
 
   __asm__("lidt %0" ::"m"(idtr));
+
+  debug_printf("[IDT] : IDT Setup Complete\n");
 }

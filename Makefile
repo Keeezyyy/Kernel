@@ -9,6 +9,7 @@
 #   make debug      -> QEMU haelt an und wartet auf gdb (Port 1234)
 #   make gdb        -> gdb starten und mit "make debug" verbinden
 #   make debug-gdb  -> QEMU im Hintergrund + gdb im Vordergrund (ein Terminal)
+#   make lsp        -> compile_flags.txt fuer clangd erzeugen
 #   make info       -> Toolchain, Quelldateien und Flags anzeigen
 #   make clean      -> Build-Artefakte loeschen
 #   make distclean  -> zusaetzlich generierte initrd-Dateien loeschen
@@ -132,6 +133,7 @@ WARNINGS := -Wall -Wextra -Wshadow -Wundef -Wvla -Wstrict-prototypes \
 # zwingend.
 CFLAGS := -std=gnu11 -ffreestanding -O2 -g $(WARNINGS) \
           -I$(INC_DIR) -I$(SRC_DIR) \
+          -include $(SRC_DIR)/config.h \
           -DSERIAL_PORT=$(SERIAL_PORT) -DSERIAL_DIVISOR=$(SERIAL_DIVISOR) \
           -fpic -mno-red-zone -mno-mmx -mno-sse -mno-sse2 \
           -fno-stack-protector -fno-omit-frame-pointer \
@@ -159,6 +161,18 @@ LDFLAGS := -nostdlib -n -T $(LDSCRIPT)
 ifneq ($(shell $(LD) --help 2>/dev/null | grep -c -- --no-warn-rwx-segments),0)
   LDFLAGS += --no-warn-rwx-segments
 endif
+
+# --- clangd (LSP) ----------------------------------------------------------
+# compile_flags.txt gibt clangd exakt die Flags des echten Builds - inklusive
+# "-include src/config.h", damit die Konfigurationsmakros auch im Editor
+# definiert sind. Ein Argument pro Zeile; relative Pfade loest clangd gegen
+# das Verzeichnis der compile_flags.txt auf, also gegen die Projektwurzel.
+#
+#   --target=...                  clangd kennt den Cross-Compiler nicht
+#   -nostdlibinc                  keine Host-/SDK-Header, nur die des Compilers
+#   -Wno-unknown-warning-option   -Wredundant-decls o.ae. gibt es nur in GCC
+CLANGD_FLAGS := --target=x86_64-unknown-none-elf $(CFLAGS) \
+                -nostdlibinc -Wno-unknown-warning-option
 
 # --- Quellen ---------------------------------------------------------------
 # find laeuft rekursiv: jede neue .c/.s/.S unterhalb von src/ bzw. include/
@@ -215,9 +229,18 @@ ifneq ($(filter all check img run run-efi debug debug-gdb,$(GOALS)),)
   endif
 endif
 
-.PHONY: all check img run run-efi debug debug-gdb gdb info help clean distclean serial-log
+.PHONY: all check img run run-efi debug debug-gdb gdb lsp info help clean distclean serial-log
 
-all: $(KERNEL)
+# compile_flags.txt haengt mit am Standardziel, damit die LSP-Flags nie von
+# den Build-Flags abweichen.
+all: $(KERNEL) compile_flags.txt
+
+# --- clangd ----------------------------------------------------------------
+lsp: compile_flags.txt
+
+compile_flags.txt: $(MAKEFILE_LIST)
+	@echo "  GEN     $@"
+	$(Q)printf '%s\n' $(CLANGD_FLAGS) > $@
 
 # --- Kompilieren: include/ -------------------------------------------------
 # Steht bewusst vor den src/-Regeln, damit build/include/... eindeutig hier
@@ -379,14 +402,15 @@ info:
 	@echo "CFLAGS      : $(CFLAGS)"
 	@echo "EXT_CFLAGS  : $(EXT_CFLAGS)"
 	@echo "LDFLAGS     : $(LDFLAGS)"
+	@echo "CLANGD_FLAGS: $(CLANGD_FLAGS)"
 
 help:
-	@sed -n '2,26p' $(firstword $(MAKEFILE_LIST)) | sed 's/^# \{0,1\}//'
+	@sed -n '2,27p' $(firstword $(MAKEFILE_LIST)) | sed 's/^# \{0,1\}//'
 
 clean:
 	$(Q)rm -rf $(BUILD_DIR)
 
 distclean: clean
-	$(Q)rm -f $(INITRD)/sys/core
+	$(Q)rm -f $(INITRD)/sys/core compile_flags.txt
 
 -include $(DEPS)

@@ -6,6 +6,7 @@
 #include "./lib/string.h"
 #include "arch/x86-64/gdt/gdt.h"
 #include "arch/x86-64/idt/idt.h"
+#include "arch/x86-64/mmap/mmap.h"
 
 extern BOOTBOOT bootboot;
 extern uint8_t environment[4096];
@@ -23,6 +24,8 @@ static void _initilizer(void) {
   init_gdt();
 
   init_idt();
+
+  init_mmap(&bootboot);
 }
 
 static void _test(void) {
@@ -39,7 +42,7 @@ static void _test(void) {
   output -> int 0x6
 
   *(volatile uint64_t *)0x0000700000000000ull = 1;
-  output -> int 0xE
+  output->int 0xE
   */
 }
 
