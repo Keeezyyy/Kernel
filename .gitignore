@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------------------
+# Build-Artefakte (alles, was "make" bzw. "make clean/distclean" erzeugt)
+# ---------------------------------------------------------------------------
+build/
+
+# Vom Makefile ins initrd kopierter, gestrippter Kernel ("make distclean")
+initrd/sys/core
+
+# Objekte, Dependency-Files und Linker-Ausgaben, falls doch mal ausserhalb
+# von build/ erzeugt
+*.o
+*.d
+*.elf
+*.bin
+*.a
+*.lst
+*.map
+
+# Disk-Images und Loader-Ausgaben
+*.img
+*.iso
+*.vdi
+*.vmdk
+*.qcow2
+
+# ---------------------------------------------------------------------------
+# mkbootimg wird lokal aus tools/bootboot gebaut (Quellen bleiben getrackt)
+# ---------------------------------------------------------------------------
+tools/bootboot/mkbootimg/*.o
+tools/bootboot/mkbootimg/mkbootimg
+
+# ---------------------------------------------------------------------------
+# Laufzeit: QEMU / OVMF / Debugging
+# ---------------------------------------------------------------------------
+*.log
+*.fd
+core.[0-9]*
+vgcore.*
+.gdb_history
+.gdbinit
+
+# ---------------------------------------------------------------------------
+# Editoren / IDEs
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.cache/
+compile_commands.json
+.clangd/
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+tags
+TAGS
+cscope.*
+
+# ---------------------------------------------------------------------------
+# Betriebssystem
+# ---------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini

@@ -1,0 +1,10 @@
+{
+    "diskguid": "00000000-0000-0000-0000-000000000000",
+    "disksize": 64,
+    "align": 1024,
+    "config": "initrd/sys/config",
+    "initrd": { "type": "tar", "gzip": true, "directory": "initrd" },
+    "partitions": [
+        { "type": "boot", "size": 16 }
+    ]
+}

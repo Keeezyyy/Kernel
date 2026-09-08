@@ -1,0 +1,5 @@
+// BOOTBOOT Environment
+// Bildschirmaufloesung (ohne Angabe: automatisch)
+screen=1024x768
+// Pfad des Kernels im initrd
+kernel=sys/core
