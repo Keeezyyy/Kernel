@@ -43,3 +43,20 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define ROUND_UP(x, n) (((x) + (n) - 1) / (n) * (n))
+#define FLOOR_TO(x, n) ((x) / (n) * (n))
+
+#if defined(_MSC_VER)
+#define ALIGNAS(n) __declspec(align(n))
+#define ALIGNOF(type) __alignof(type)
+#elif defined(__GNUC__) || defined(__clang__)
+#define ALIGNAS(n) __attribute__((aligned(n)))
+#define ALIGNOF(type) __alignof__(type)
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#include <stdalign.h>
+#define ALIGNAS(n) _Alignas(n)
+#define ALIGNOF(type) _Alignof(type)
+#else
+#define ALIGNAS(n)
+#define ALIGNOF(type) sizeof(type)
+#endif

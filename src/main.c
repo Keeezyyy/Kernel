@@ -7,6 +7,7 @@
 #include "arch/x86-64/gdt/gdt.h"
 #include "arch/x86-64/idt/idt.h"
 #include "arch/x86-64/mmap/mmap.h"
+#include "mem/pmm.h"
 
 extern BOOTBOOT bootboot;
 extern uint8_t environment[4096];
@@ -26,6 +27,8 @@ static void _initilizer(void) {
   init_idt();
 
   init_mmap(&bootboot);
+
+  init_pmm();
 }
 
 static void _test(void) {
