@@ -25,12 +25,30 @@ static void _initilizer(void) {
   init_idt();
 }
 
+static void _test(void) {
+
+  // idt test
+  /*
+  volatile int a = 5;
+  volatile int b = 0;
+  volatile int c = a / b;
+
+  output -> int 0x0
+
+  __asm__ volatile("ud2");
+  output -> int 0x6
+
+  *(volatile uint64_t *)0x0000700000000000ull = 1;
+  output -> int 0xE
+  */
+}
+
 void _start(void);
 
 void _start(void) {
   _initilizer();
 
-  debug_printf("hello world!\n");
+  _test();
 
   for (;;) {
     __asm__ volatile("hlt");

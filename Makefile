@@ -8,9 +8,15 @@
 #   make run-efi    -> QEMU, UEFI-Boot (OVMF)
 #   make debug      -> QEMU haelt an und wartet auf gdb (Port 1234)
 #   make gdb        -> gdb starten und mit "make debug" verbinden
+#   make debug-gdb  -> QEMU im Hintergrund + gdb im Vordergrund (ein Terminal)
 #   make info       -> Toolchain, Quelldateien und Flags anzeigen
 #   make clean      -> Build-Artefakte loeschen
 #   make distclean  -> zusaetzlich generierte initrd-Dateien loeschen
+#
+#   DEBUG=1     haengt den gdb-Stub an run/run-efi an, Gast laeuft sofort los:
+#                                                      make run DEBUG=1
+#   DEBUG=wait  wie oben, aber QEMU wartet auf gdb:     make run DEBUG=wait
+#   GDBPORT=... Port des gdb-Stubs (Vorgabe 1234):      make debug GDBPORT=9000
 #
 #   V=1     zeigt die vollstaendigen Kommandos:        make V=1
 #   -j$(nproc) wird unterstuetzt:                      make -j8
@@ -32,10 +38,13 @@ CC      := $(TARGET)-gcc
 LD      := $(TARGET)-ld
 OBJCOPY := $(TARGET)-objcopy
 SIZE    := $(TARGET)-size
-GDB     := gdb
 HOSTCC  := cc
 # NASM uebersetzt die .asm-Dateien (Intel-Syntax), GAS die .s/.S.
 NASM    := nasm
+
+# Bevorzugt den Cross-gdb (kennt i386:x86-64 garantiert), faellt sonst auf
+# den System-gdb zurueck. Ueberschreibbar: make gdb GDB=/pfad/zu/gdb
+GDB     ?= $(firstword $(shell command -v $(TARGET)-gdb gdb 2>/dev/null) gdb)
 
 # --- Verzeichnisse ---------------------------------------------------------
 SRC_DIR   := src
@@ -51,6 +60,7 @@ LDSCRIPT := link.ld
 KERNEL   := $(BUILD_DIR)/kernel.elf
 CORE     := $(BUILD_DIR)/core          # Kernel ohne Debug-Sektionen, wandert ins initrd
 IMG      := $(BUILD_DIR)/disk.img
+GDBINIT  := $(BUILD_DIR)/gdbinit
 
 # --- mkbootimg (aus tools/bootboot mitgeliefert, wird lokal gebaut) --------
 MKBOOTIMG_DIR  := tools/bootboot/mkbootimg
@@ -71,14 +81,32 @@ SERIAL_DIVISOR := 3
 SERIAL_LOG     := $(BUILD_DIR)/serial.log
 
 # --- QEMU ------------------------------------------------------------------
+QEMU    := qemu-system-x86_64
+GDBPORT ?= 1234
+GDBSTUB := -gdb tcp::$(GDBPORT)
+
+QEMUBASE := -drive format=raw,file=$(IMG) -m 256 \
+            -no-reboot -no-shutdown -d guest_errors
+
 # COM1 haengt an stdio und wird zusaetzlich mitgeschrieben.
 #   mux=on     -> Ctrl-A C wechselt zwischen Gastkonsole und QEMU-Monitor
 #   signal=off -> Ctrl-C geht an den Gast statt QEMU zu beenden
-QEMU     := qemu-system-x86_64
-QEMUOPTS := -drive format=raw,file=$(IMG) -m 256 \
-            -chardev stdio,id=com1,mux=on,signal=off,logfile=$(SERIAL_LOG) \
-            -serial chardev:com1 -mon chardev=com1 \
-            -no-reboot -no-shutdown -d guest_errors
+QEMUCON := -chardev stdio,id=com1,mux=on,signal=on,logfile=$(SERIAL_LOG) \
+           -serial chardev:com1 -mon chardev=com1
+
+QEMUOPTS := $(QEMUBASE) $(QEMUCON)
+
+# Fuer "make debug-gdb": stdio gehoert dem gdb, COM1 geht in die Logdatei.
+QEMUOPTS_BG := $(QEMUBASE) -serial file:$(SERIAL_LOG) -display none
+
+# DEBUG=1    -> gdb-Stub laeuft mit, Gast startet sofort (spaeter anhaengen)
+# DEBUG=wait -> Stub laeuft mit, Gast haelt vor der ersten Instruktion
+ifeq ($(DEBUG),1)
+  QEMUOPTS += $(GDBSTUB)
+endif
+ifeq ($(DEBUG),wait)
+  QEMUOPTS += $(GDBSTUB) -S
+endif
 
 # UEFI-Firmware (OVMF). Wird automatisch gesucht; bei Bedarf ueberschreiben:
 #   make run-efi OVMF_DIR=/pfad/zu/share/qemu
@@ -171,7 +199,7 @@ endif
 
 # --- Toolchain-Pruefung (nur wenn wirklich gebaut wird) --------------------
 GOALS := $(if $(MAKECMDGOALS),$(MAKECMDGOALS),all)
-ifneq ($(filter all check img run run-efi debug,$(GOALS)),)
+ifneq ($(filter all check img run run-efi debug debug-gdb,$(GOALS)),)
   ifeq ($(shell command -v $(CC) 2>/dev/null),)
     $(error Cross-Compiler "$(CC)" nicht gefunden. \
       Auf macOS z.B.: brew install x86_64-elf-gcc x86_64-elf-binutils)
@@ -187,7 +215,7 @@ ifneq ($(filter all check img run run-efi debug,$(GOALS)),)
   endif
 endif
 
-.PHONY: all check img run run-efi debug gdb info help clean distclean serial-log
+.PHONY: all check img run run-efi debug debug-gdb gdb info help clean distclean serial-log
 
 all: $(KERNEL)
 
@@ -295,16 +323,39 @@ endif
 	  -drive if=pflash,format=raw,unit=0,readonly=on,file=$(OVMF_CODE) \
 	  -drive if=pflash,format=raw,unit=1,file=$(BUILD_DIR)/ovmf-vars.fd
 
-# QEMU haelt vor der ersten Instruktion an und wartet auf gdb
+# --- Debuggen --------------------------------------------------------------
+# Kommandodatei fuer gdb. Wird aus den Makefile-Variablen erzeugt, damit
+# GDBPORT und Symboldatei nicht doppelt gepflegt werden muessen.
+$(GDBINIT): $(MAKEFILE_LIST)
+	@mkdir -p $(dir $@)
+	@echo "  GEN     $@"
+	$(Q)printf '%s\n' \
+	  'set confirm off' \
+	  'set pagination off' \
+	  'set disassembly-flavor intel' \
+	  'set architecture i386:x86-64' \
+	  'symbol-file $(KERNEL)' \
+	  'target remote localhost:$(GDBPORT)' \
+	  > $@
+
+# QEMU haelt vor der ersten Instruktion an und wartet auf gdb (Terminal 1)
 debug: $(IMG)
 	@mkdir -p $(dir $(SERIAL_LOG))
-	$(QEMU) $(QEMUOPTS) -s -S
+	$(QEMU) $(QEMUBASE) $(QEMUCON) $(GDBSTUB) -S
 
-# In einem zweiten Terminal starten
-gdb:
-	$(GDB) -ex 'set architecture i386:x86-64' \
-	       -ex 'target remote localhost:1234' \
-	       -ex 'symbol-file $(KERNEL)'
+# gdb starten und mit "make debug" verbinden (Terminal 2)
+gdb: $(GDBINIT)
+	$(GDB) -x $(GDBINIT)
+
+# Alles in einem Terminal: QEMU im Hintergrund, gdb im Vordergrund.
+# COM1 landet in $(SERIAL_LOG), "make serial-log" zeigt es live mit.
+# Beim Verlassen von gdb wird QEMU mit beendet.
+debug-gdb: $(IMG) $(GDBINIT)
+	@mkdir -p $(dir $(SERIAL_LOG))
+	@echo "  QEMU    Hintergrund, COM1 -> $(SERIAL_LOG), Stub auf Port $(GDBPORT)"
+	$(Q)$(QEMU) $(QEMUOPTS_BG) $(GDBSTUB) -S & \
+	  qpid=$$!; trap 'kill $$qpid 2>/dev/null' EXIT INT TERM; \
+	  sleep 1; $(GDB) -x $(GDBINIT)
 
 # Mitgeschriebene COM1-Ausgabe live verfolgen (drittes Terminal)
 serial-log:
@@ -316,6 +367,8 @@ info:
 	@echo "Host        : $(UNAME_S)"
 	@echo "CC          : $(CC) ($(shell $(CC) -dumpversion 2>/dev/null || echo 'nicht gefunden'))"
 	@echo "LD          : $(LD)"
+	@echo "GDB         : $(GDB) ($(shell $(GDB) --version 2>/dev/null | head -1 || echo 'nicht gefunden'))"
+	@echo "GDB-Stub    : tcp::$(GDBPORT)   DEBUG=$(if $(DEBUG),$(DEBUG),<aus>)"
 	@echo "OVMF_CODE   : $(if $(OVMF_CODE),$(OVMF_CODE),<nicht gefunden>)"
 	@echo "COM1        : Port $(SERIAL_PORT), Divisor $(SERIAL_DIVISOR), Log $(SERIAL_LOG)"
 	@echo "C-Quellen   : $(if $(C_SRCS),$(C_SRCS),<keine>)"
@@ -328,7 +381,7 @@ info:
 	@echo "LDFLAGS     : $(LDFLAGS)"
 
 help:
-	@sed -n '2,22p' $(firstword $(MAKEFILE_LIST)) | sed 's/^# \{0,1\}//'
+	@sed -n '2,26p' $(firstword $(MAKEFILE_LIST)) | sed 's/^# \{0,1\}//'
 
 clean:
 	$(Q)rm -rf $(BUILD_DIR)

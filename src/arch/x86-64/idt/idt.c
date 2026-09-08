@@ -4,34 +4,33 @@
 #include "../../../utils/utils.h"
 #include <stdint.h>
 
-union idt_entry {
-  uint64_t data[2];
-};
+extern uint8_t isr_stub_table[256][ISR_STUB_SIZE];
 
-union idt_entry _build_gate_descriptor(uint64_t entry, uint16_t segment, uint8_t ist, bool is_interrupt_gate, uint8_t privilege_level) {
+static union idt_entry idt_buffer[IDT_ENTRY_COUNT];
+static idt_ptr_t idtr;
 
-  union idt_entry curr_entry;
+void _init_idt_entries(void) {
+  // union idt_entry tmp = BUILD_GATE_DESCRIPTOR(&isr_wrapper, KERNEL_CODE_SELECTOR, 0, INTERRUPT_GATE_TYPE, PRIVILEGE_RING_0_KERNEL);
 
-  curr_entry.data[0] = 0;
-  curr_entry.data[1] = 0;
-
-  curr_entry.data[0] |= (uint64_t)entry & 0xFFFF;
-  curr_entry.data[0] |= ((uint64_t)segment << 16) & 0xFFFF0000;
-  curr_entry.data[0] |= (uint64_t)(ist & 0x7) << 32;
-
-  curr_entry.data[0] |= is_interrupt_gate ? (uint64_t)0xE << 40 : (uint64_t)0xF << 40;
-  curr_entry.data[0] |= (uint64_t)(privilege_level & 0b11) << 45;
-  curr_entry.data[0] |= (uint64_t)1 << 47;
-  curr_entry.data[0] |= ((((uint64_t)entry) >> 16) & 0xFFFF) << 48;
-
-  curr_entry.data[1] |= (((uint64_t)entry) >> 32) & 0xFFFFFFFF;
-
-  return curr_entry;
+  for (int i = 0; i < 256; i++) {
+    // for now
+    // TODO: correct type and priv
+    idt_buffer[i] = BUILD_GATE_DESCRIPTOR(&isr_stub_table[i], KERNEL_CODE_SELECTOR, 0, TRAP_GATE_TYPE, KERNEL_CODE_SELECTOR);
+  }
 }
 
-void init_idt() {
-  union idt_entry test = _build_gate_descriptor((uint64_t)init_idt, 0, 0, true, 3);
-  debug_printf("val[0] : 0x%016llx\n", (uint64_t)init_idt);
-  debug_printf("val[0] : 0x%016llx\n", test.data[0]);
-  debug_printf("val[1] : 0x%016llx\n", test.data[1]);
+void global_interrupt_handler(uint16_t interrupt_num) {
+  debug_printf("[interrupt] : 0x%x\n", interrupt_num);
+
+  while (1) {
+  }
+}
+
+void init_idt(void) {
+  _init_idt_entries();
+
+  idtr.base = (uint64_t)idt_buffer;
+  idtr.limit = sizeof(idt_buffer) - 1;
+
+  __asm__("lidt %0" ::"m"(idtr));
 }
